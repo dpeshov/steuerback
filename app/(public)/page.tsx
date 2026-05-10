@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { CheckCircle, Clock, Shield, Globe, ArrowRight, Star } from 'lucide-react'
+import { CheckCircle, Shield, Globe, ArrowRight, Star } from 'lucide-react'
 
 const steps = [
   { n: '01', title: 'Check Eligibility', desc: 'Answer 4 quick questions to see if you qualify. Takes 60 seconds.' },

@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import type { User } from '@supabase/supabase-js'
 
-export default function AdminNav({ user }: { user: User }) {
+export default function AdminNav({ user: _user }: { user: User }) {
   const router = useRouter()
   const supabase = createClient()
 
