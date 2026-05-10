@@ -1,41 +1,67 @@
 'use client'
 import Link from 'next/link'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Menu, X } from 'lucide-react'
 
 export default function Navbar() {
   const [open, setOpen] = useState(false)
+  const [scrolled, setScrolled] = useState(false)
+
+  useEffect(() => {
+    const fn = () => setScrolled(window.scrollY > 24)
+    window.addEventListener('scroll', fn)
+    return () => window.removeEventListener('scroll', fn)
+  }, [])
 
   return (
-    <header className="bg-brand-navy text-white sticky top-0 z-50">
-      <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-        <Link href="/" className="font-bold text-xl tracking-tight">
+    <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
+      scrolled
+        ? 'bg-[#0D0D1A]/90 backdrop-blur-2xl border-b border-white/5 shadow-xl shadow-black/30'
+        : 'bg-transparent'
+    }`}>
+      <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+        <Link href="/" className="font-black text-xl tracking-tight text-white">
           Steuer<span className="text-brand-red">Back</span>
         </Link>
 
-        <nav className="hidden md:flex items-center gap-6 text-sm">
-          <Link href="/how-it-works" className="hover:text-brand-red transition-colors">How it works</Link>
-          <Link href="/pricing" className="hover:text-brand-red transition-colors">Pricing</Link>
-          <Link href="/faq" className="hover:text-brand-red transition-colors">FAQ</Link>
-          <Link href="/login" className="hover:text-brand-red transition-colors">Login</Link>
-          <Link href="/register" className="bg-brand-red hover:bg-red-600 px-4 py-2 rounded-lg font-semibold transition-colors">
-            Start Free
+        <nav className="hidden md:flex items-center gap-1 text-sm">
+          {[
+            { href: '/how-it-works', label: 'How it works' },
+            { href: '/pricing', label: 'Pricing' },
+            { href: '/faq', label: 'FAQ' },
+          ].map(({ href, label }) => (
+            <Link key={href} href={href} className="px-4 py-2 text-white/60 hover:text-white rounded-xl hover:bg-white/5 transition-all">
+              {label}
+            </Link>
+          ))}
+          <div className="w-px h-5 bg-white/10 mx-2" />
+          <Link href="/login" className="px-4 py-2 text-white/60 hover:text-white transition-colors">
+            Login
+          </Link>
+          <Link href="/register" className="ml-1 bg-brand-red hover:bg-red-500 text-white font-semibold px-5 py-2 rounded-xl transition-all hover:shadow-lg hover:shadow-brand-red/30">
+            Get started
           </Link>
         </nav>
 
-        <button className="md:hidden" onClick={() => setOpen(!open)}>
-          {open ? <X size={24} /> : <Menu size={24} />}
+        <button className="md:hidden text-white p-1" onClick={() => setOpen(!open)} aria-label="Menu">
+          {open ? <X size={22} /> : <Menu size={22} />}
         </button>
       </div>
 
       {open && (
-        <div className="md:hidden bg-brand-navy border-t border-white/10 px-4 pb-4 flex flex-col gap-3 text-sm">
-          <Link href="/how-it-works" onClick={() => setOpen(false)} className="py-2">How it works</Link>
-          <Link href="/pricing" onClick={() => setOpen(false)} className="py-2">Pricing</Link>
-          <Link href="/faq" onClick={() => setOpen(false)} className="py-2">FAQ</Link>
-          <Link href="/login" onClick={() => setOpen(false)} className="py-2">Login</Link>
-          <Link href="/register" onClick={() => setOpen(false)} className="bg-brand-red px-4 py-2 rounded-lg font-semibold text-center">
-            Start Free
+        <div className="md:hidden bg-[#0D0D1A]/95 backdrop-blur-2xl border-t border-white/5 px-6 py-4 flex flex-col gap-1">
+          {[
+            { href: '/how-it-works', label: 'How it works' },
+            { href: '/pricing', label: 'Pricing' },
+            { href: '/faq', label: 'FAQ' },
+            { href: '/login', label: 'Login' },
+          ].map(({ href, label }) => (
+            <Link key={href} href={href} onClick={() => setOpen(false)} className="py-3 px-4 text-white/70 hover:text-white hover:bg-white/5 rounded-xl transition-all text-sm">
+              {label}
+            </Link>
+          ))}
+          <Link href="/register" onClick={() => setOpen(false)} className="mt-2 bg-brand-red text-white font-semibold px-4 py-3 rounded-xl text-sm text-center hover:bg-red-500 transition-colors">
+            Get started free
           </Link>
         </div>
       )}
