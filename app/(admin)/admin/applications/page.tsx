@@ -18,7 +18,7 @@ const STATUS_COLORS: Record<ApplicationStatus, string> = {
 }
 
 export default async function AdminApplicationsPage() {
-  const supabase = createAdminClient()
+  const supabase = await createAdminClient()
 
   const { data: applications } = await supabase
     .from('applications')
