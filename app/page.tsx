@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { CheckCircle, Shield, Globe, ArrowRight, Star, Zap, Clock } from 'lucide-react'
+import { CheckCircle, Shield, Globe, ArrowRight, Star, Zap } from 'lucide-react'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 
