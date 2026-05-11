@@ -89,17 +89,19 @@ export default function ProfilePage() {
   const lbl = 'block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2'
 
   const activeSection = SECTIONS.find(s => s.id === active)!
+  const sectionIndex = SECTIONS.findIndex(s => s.id === active)
 
   return (
     <div className="space-y-5">
-      <div>
-        <h1 className="text-2xl font-black text-brand-navy tracking-tight">Your profile</h1>
-        <p className="text-gray-400 text-sm mt-0.5">Complete all sections for your tax return</p>
+      <div className="pt-2">
+        <p className="text-xs font-bold text-brand-red uppercase tracking-widest mb-1">Profile</p>
+        <h1 className="text-3xl font-black text-brand-navy tracking-tight">Your profile</h1>
+        <p className="text-gray-400 text-sm mt-1">Complete all sections for your tax return</p>
       </div>
 
       {/* Section tabs */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-        {SECTIONS.map(({ id, label, icon: Icon, desc }) => {
+        {SECTIONS.map(({ id, label, icon: Icon, desc }, i) => {
           const isActive = active === id
           return (
             <button
@@ -107,198 +109,211 @@ export default function ProfilePage() {
               onClick={() => setActive(id)}
               className={`flex flex-col items-start p-4 rounded-2xl border text-left transition-all ${
                 isActive
-                  ? 'bg-brand-navy border-brand-navy text-white shadow-lg shadow-brand-navy/20'
-                  : 'bg-white border-gray-100 text-brand-navy hover:border-gray-200'
+                  ? 'bg-brand-navy border-brand-navy text-white shadow-lg shadow-brand-navy/15'
+                  : 'bg-white border-gray-100 text-brand-navy hover:border-gray-200 hover:shadow-sm'
               }`}
             >
-              <Icon size={16} className={isActive ? 'text-white mb-2' : 'text-brand-red mb-2'} />
+              <div className="flex items-center justify-between w-full mb-2">
+                <Icon size={15} className={isActive ? 'text-white' : 'text-brand-red'} />
+                <span className={`text-xs font-black ${isActive ? 'text-white/40' : 'text-gray-200'}`}>
+                  0{i + 1}
+                </span>
+              </div>
               <span className="text-sm font-bold">{label}</span>
-              <span className={`text-xs mt-0.5 ${isActive ? 'text-white/50' : 'text-gray-400'}`}>{desc}</span>
+              <span className={`text-xs mt-0.5 ${isActive ? 'text-white/45' : 'text-gray-400'}`}>{desc}</span>
             </button>
           )
         })}
       </div>
 
       {/* Form card */}
-      <div className="bg-white border border-gray-100 rounded-3xl p-6 shadow-sm">
-        <div className="flex items-center gap-3 mb-6 pb-5 border-b border-gray-50">
-          <div className="w-9 h-9 bg-brand-red/8 rounded-xl flex items-center justify-center">
-            <activeSection.icon size={16} className="text-brand-red" />
+      <div className="bg-white border border-gray-100 rounded-3xl shadow-sm overflow-hidden">
+        {/* Card header */}
+        <div className="bg-gradient-to-r from-gray-50 to-white border-b border-gray-100 px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 bg-brand-navy rounded-xl flex items-center justify-center">
+              <activeSection.icon size={16} className="text-white" />
+            </div>
+            <div>
+              <h2 className="font-bold text-brand-navy text-sm">{activeSection.label}</h2>
+              <p className="text-xs text-gray-400">{activeSection.desc}</p>
+            </div>
           </div>
-          <div>
-            <h2 className="font-bold text-brand-navy text-sm">{activeSection.label}</h2>
-            <p className="text-xs text-gray-400">{activeSection.desc}</p>
-          </div>
+          <span className="text-xs text-gray-300 font-bold">{sectionIndex + 1} / {SECTIONS.length}</span>
         </div>
 
-        <div className="space-y-4">
-          {active === 'personal' && (
-            <>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className={lbl}>First name</label>
-                  <input className={inp} value={form.first_name} onChange={e => set('first_name', e.target.value)} placeholder="Ana" />
+        <div className="p-6">
+          <div className="space-y-4">
+            {active === 'personal' && (
+              <>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className={lbl}>First name</label>
+                    <input className={inp} value={form.first_name} onChange={e => set('first_name', e.target.value)} placeholder="Ana" />
+                  </div>
+                  <div>
+                    <label className={lbl}>Last name</label>
+                    <input className={inp} value={form.last_name} onChange={e => set('last_name', e.target.value)} placeholder="Popovic" />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className={lbl}>Date of birth</label>
+                    <input type="date" className={inp} value={form.date_of_birth} onChange={e => set('date_of_birth', e.target.value)} />
+                  </div>
+                  <div>
+                    <label className={lbl}>Nationality</label>
+                    <select className={inp} value={form.nationality} onChange={e => set('nationality', e.target.value)}>
+                      <option value="">Select</option>
+                      {COUNTRIES.map(c => <option key={c}>{c}</option>)}
+                    </select>
+                  </div>
                 </div>
                 <div>
-                  <label className={lbl}>Last name</label>
-                  <input className={inp} value={form.last_name} onChange={e => set('last_name', e.target.value)} placeholder="Popovic" />
+                  <label className={lbl}>Phone number</label>
+                  <input className={inp} value={form.phone} onChange={e => set('phone', e.target.value)} placeholder="+389 70 123 456" />
                 </div>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className={lbl}>Date of birth</label>
-                  <input type="date" className={inp} value={form.date_of_birth} onChange={e => set('date_of_birth', e.target.value)} />
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className={lbl}>Document type</label>
+                    <select className={inp} value={form.document_type} onChange={e => set('document_type', e.target.value)}>
+                      <option value="">Select</option>
+                      <option value="passport">Passport</option>
+                      <option value="national_id">National ID</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className={lbl}>Document number</label>
+                    <input className={inp} value={form.passport_number} onChange={e => set('passport_number', e.target.value)} placeholder="AB123456" />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className={lbl}>Issuing country</label>
+                    <select className={inp} value={form.issuing_country} onChange={e => set('issuing_country', e.target.value)}>
+                      <option value="">Select</option>
+                      {COUNTRIES.map(c => <option key={c}>{c}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className={lbl}>Expiry date</label>
+                    <input type="date" className={inp} value={form.document_expiry} onChange={e => set('document_expiry', e.target.value)} />
+                  </div>
                 </div>
                 <div>
-                  <label className={lbl}>Nationality</label>
-                  <select className={inp} value={form.nationality} onChange={e => set('nationality', e.target.value)}>
+                  <label className={lbl}>Tax ID (Steuer-ID) — if known</label>
+                  <input className={inp} value={form.tax_id} onChange={e => set('tax_id', e.target.value)} placeholder="12 345 678 901" />
+                </div>
+              </>
+            )}
+
+            {active === 'address' && (
+              <>
+                <div>
+                  <label className={lbl}>Country of residence</label>
+                  <select className={inp} value={form.country_of_residence} onChange={e => set('country_of_residence', e.target.value)}>
                     <option value="">Select</option>
                     {COUNTRIES.map(c => <option key={c}>{c}</option>)}
                   </select>
                 </div>
-              </div>
-              <div>
-                <label className={lbl}>Phone number</label>
-                <input className={inp} value={form.phone} onChange={e => set('phone', e.target.value)} placeholder="+389 70 123 456" />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className={lbl}>Document type</label>
-                  <select className={inp} value={form.document_type} onChange={e => set('document_type', e.target.value)}>
-                    <option value="">Select</option>
-                    <option value="passport">Passport</option>
-                    <option value="national_id">National ID</option>
-                  </select>
+                  <label className={lbl}>City</label>
+                  <input className={inp} value={form.city} onChange={e => set('city', e.target.value)} placeholder="Skopje" />
                 </div>
                 <div>
-                  <label className={lbl}>Document number</label>
-                  <input className={inp} value={form.passport_number} onChange={e => set('passport_number', e.target.value)} placeholder="AB123456" />
+                  <label className={lbl}>Street address</label>
+                  <input className={inp} value={form.address} onChange={e => set('address', e.target.value)} placeholder="Ul. Makedonija 12" />
                 </div>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className={lbl}>Issuing country</label>
-                  <select className={inp} value={form.issuing_country} onChange={e => set('issuing_country', e.target.value)}>
-                    <option value="">Select</option>
-                    {COUNTRIES.map(c => <option key={c}>{c}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className={lbl}>Expiry date</label>
-                  <input type="date" className={inp} value={form.document_expiry} onChange={e => set('document_expiry', e.target.value)} />
-                </div>
-              </div>
-              <div>
-                <label className={lbl}>Tax ID (Steuer-ID) — if known</label>
-                <input className={inp} value={form.tax_id} onChange={e => set('tax_id', e.target.value)} placeholder="12 345 678 901" />
-              </div>
-            </>
-          )}
+              </>
+            )}
 
-          {active === 'address' && (
-            <>
-              <div>
-                <label className={lbl}>Country of residence</label>
-                <select className={inp} value={form.country_of_residence} onChange={e => set('country_of_residence', e.target.value)}>
-                  <option value="">Select</option>
-                  {COUNTRIES.map(c => <option key={c}>{c}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className={lbl}>City</label>
-                <input className={inp} value={form.city} onChange={e => set('city', e.target.value)} placeholder="Skopje" />
-              </div>
-              <div>
-                <label className={lbl}>Street address</label>
-                <input className={inp} value={form.address} onChange={e => set('address', e.target.value)} placeholder="Ul. Makedonija 12" />
-              </div>
-            </>
-          )}
+            {active === 'employment' && (
+              <>
+                <label className="flex items-center gap-3 p-4 bg-gray-50 rounded-2xl cursor-pointer hover:bg-gray-100 transition-colors">
+                  <div className={`w-10 h-6 rounded-full transition-colors relative shrink-0 ${form.student_status ? 'bg-brand-red' : 'bg-gray-200'}`}>
+                    <div className={`w-4 h-4 bg-white rounded-full absolute top-1 transition-all shadow-sm ${form.student_status ? 'left-5' : 'left-1'}`} />
+                  </div>
+                  <input type="checkbox" className="hidden" checked={form.student_status} onChange={e => set('student_status', e.target.checked)} />
+                  <span className="text-sm font-semibold text-brand-navy">I was a student while working in Germany</span>
+                </label>
+                {form.student_status && (
+                  <div>
+                    <label className={lbl}>University name</label>
+                    <input className={inp} value={form.university} onChange={e => set('university', e.target.value)} placeholder="University of Cologne" />
+                  </div>
+                )}
+                <div>
+                  <label className={lbl}>Employer name in Germany</label>
+                  <input className={inp} value={form.employer_name} onChange={e => set('employer_name', e.target.value)} placeholder="Amazon Deutschland GmbH" />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className={lbl}>Work start</label>
+                    <input type="date" className={inp} value={form.work_start} onChange={e => set('work_start', e.target.value)} />
+                  </div>
+                  <div>
+                    <label className={lbl}>Work end</label>
+                    <input type="date" className={inp} value={form.work_end} onChange={e => set('work_end', e.target.value)} />
+                  </div>
+                </div>
+                <div>
+                  <label className={lbl}>Gross income in Germany (EUR)</label>
+                  <input type="number" className={inp} value={form.gross_income_eur} onChange={e => set('gross_income_eur', e.target.value)} placeholder="15 000" />
+                </div>
+              </>
+            )}
 
-          {active === 'employment' && (
-            <>
-              <label className="flex items-center gap-3 p-4 bg-gray-50 rounded-2xl cursor-pointer">
-                <div className={`w-10 h-6 rounded-full transition-colors relative ${form.student_status ? 'bg-brand-red' : 'bg-gray-200'}`}>
-                  <div className={`w-4 h-4 bg-white rounded-full absolute top-1 transition-all shadow ${form.student_status ? 'left-5' : 'left-1'}`} />
-                </div>
-                <input type="checkbox" className="hidden" checked={form.student_status} onChange={e => set('student_status', e.target.checked)} />
-                <span className="text-sm font-semibold text-brand-navy">I was a student while working in Germany</span>
-              </label>
-              {form.student_status && (
-                <div>
-                  <label className={lbl}>University name</label>
-                  <input className={inp} value={form.university} onChange={e => set('university', e.target.value)} placeholder="University of Cologne" />
-                </div>
-              )}
-              <div>
-                <label className={lbl}>Employer name in Germany</label>
-                <input className={inp} value={form.employer_name} onChange={e => set('employer_name', e.target.value)} placeholder="Amazon Deutschland GmbH" />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className={lbl}>Work start</label>
-                  <input type="date" className={inp} value={form.work_start} onChange={e => set('work_start', e.target.value)} />
+            {active === 'banking' && (
+              <>
+                <div className="flex items-start gap-3 p-4 bg-blue-50 border border-blue-100 rounded-2xl">
+                  <div className="w-6 h-6 bg-blue-100 rounded-lg flex items-center justify-center shrink-0 mt-0.5">
+                    <CreditCard size={12} className="text-blue-600" />
+                  </div>
+                  <p className="text-xs text-blue-700 leading-relaxed">
+                    The refund will be transferred directly to this account. It must be in your name. We use bank-level encryption.
+                  </p>
                 </div>
                 <div>
-                  <label className={lbl}>Work end</label>
-                  <input type="date" className={inp} value={form.work_end} onChange={e => set('work_end', e.target.value)} />
+                  <label className={lbl}>Account holder name</label>
+                  <input className={inp} value={form.bank_account_holder} onChange={e => set('bank_account_holder', e.target.value)} placeholder="Ana Popovic" />
                 </div>
-              </div>
-              <div>
-                <label className={lbl}>Gross income in Germany (EUR)</label>
-                <input type="number" className={inp} value={form.gross_income_eur} onChange={e => set('gross_income_eur', e.target.value)} placeholder="15 000" />
-              </div>
-            </>
-          )}
+                <div>
+                  <label className={lbl}>IBAN</label>
+                  <input className={`${inp} font-mono`} value={form.iban} onChange={e => set('iban', e.target.value)} placeholder="MK07 1234 5678 9012 345" />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className={lbl}>BIC / SWIFT</label>
+                    <input className={`${inp} font-mono`} value={form.swift_bic} onChange={e => set('swift_bic', e.target.value)} placeholder="STBKMK2X" />
+                  </div>
+                  <div>
+                    <label className={lbl}>Bank country</label>
+                    <select className={inp} value={form.bank_country} onChange={e => set('bank_country', e.target.value)}>
+                      <option value="">Select</option>
+                      {COUNTRIES.map(c => <option key={c}>{c}</option>)}
+                    </select>
+                  </div>
+                </div>
+                <div>
+                  <label className={lbl}>Bank name</label>
+                  <input className={inp} value={form.bank_name} onChange={e => set('bank_name', e.target.value)} placeholder="Stopanska Banka" />
+                </div>
+              </>
+            )}
+          </div>
 
-          {active === 'banking' && (
-            <>
-              <div className="flex items-start gap-3 p-4 bg-blue-50 border border-blue-100 rounded-2xl">
-                <span className="text-blue-500 text-lg shrink-0">🔒</span>
-                <p className="text-xs text-blue-700 leading-relaxed">
-                  The refund will be transferred directly to this account. It must be in your name. We use bank-level encryption.
-                </p>
-              </div>
-              <div>
-                <label className={lbl}>Account holder name</label>
-                <input className={inp} value={form.bank_account_holder} onChange={e => set('bank_account_holder', e.target.value)} placeholder="Ana Popovic" />
-              </div>
-              <div>
-                <label className={lbl}>IBAN</label>
-                <input className={inp} value={form.iban} onChange={e => set('iban', e.target.value)} placeholder="MK07 1234 5678 9012 345" />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className={lbl}>BIC / SWIFT</label>
-                  <input className={inp} value={form.swift_bic} onChange={e => set('swift_bic', e.target.value)} placeholder="STBKMK2X" />
-                </div>
-                <div>
-                  <label className={lbl}>Bank country</label>
-                  <select className={inp} value={form.bank_country} onChange={e => set('bank_country', e.target.value)}>
-                    <option value="">Select</option>
-                    {COUNTRIES.map(c => <option key={c}>{c}</option>)}
-                  </select>
-                </div>
-              </div>
-              <div>
-                <label className={lbl}>Bank name</label>
-                <input className={inp} value={form.bank_name} onChange={e => set('bank_name', e.target.value)} placeholder="Stopanska Banka" />
-              </div>
-            </>
-          )}
+          <button
+            onClick={save}
+            disabled={saving}
+            className={`mt-6 w-full font-bold py-4 rounded-2xl transition-all text-sm flex items-center justify-center gap-2 ${
+              saved
+                ? 'bg-brand-success text-white'
+                : 'bg-brand-red hover:bg-red-500 text-white hover:shadow-xl hover:shadow-brand-red/20 disabled:opacity-50'
+            }`}
+          >
+            {saved ? <><CheckCircle size={16} /> Saved!</> : saving ? 'Saving...' : 'Save changes'}
+          </button>
         </div>
-
-        <button
-          onClick={save}
-          disabled={saving}
-          className={`mt-6 w-full font-bold py-4 rounded-2xl transition-all text-sm flex items-center justify-center gap-2 ${
-            saved
-              ? 'bg-brand-success text-white'
-              : 'bg-brand-red hover:bg-red-500 text-white hover:shadow-lg hover:shadow-brand-red/20 disabled:opacity-50'
-          }`}
-        >
-          {saved ? <><CheckCircle size={16} /> Saved!</> : saving ? 'Saving...' : 'Save changes'}
-        </button>
       </div>
     </div>
   )

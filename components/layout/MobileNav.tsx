@@ -14,20 +14,20 @@ export default function MobileNav() {
   const pathname = usePathname()
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-xl border-t border-gray-100">
-      <div className="flex">
+    <nav className="md:hidden fixed bottom-4 left-4 right-4 z-50">
+      <div className="bg-[#1A1A2E]/95 backdrop-blur-xl rounded-2xl border border-white/8 shadow-2xl shadow-black/40 flex overflow-hidden">
         {NAV.map(({ href, icon: Icon, label }) => {
           const active = pathname === href
           return (
             <Link
               key={href}
               href={href}
-              className="flex-1 flex flex-col items-center py-3 gap-1 transition-colors"
+              className={`flex-1 flex flex-col items-center py-3.5 gap-1 transition-all ${active ? 'bg-white/8' : ''}`}
             >
-              <div className={`p-1.5 rounded-xl transition-all ${active ? 'bg-brand-navy' : ''}`}>
-                <Icon size={18} className={active ? 'text-white' : 'text-gray-400'} />
+              <div className={`p-1.5 rounded-xl transition-all ${active ? 'bg-brand-red/15' : ''}`}>
+                <Icon size={18} className={active ? 'text-brand-red' : 'text-white/30'} />
               </div>
-              <span className={`text-[10px] font-semibold ${active ? 'text-brand-navy' : 'text-gray-400'}`}>
+              <span className={`text-[10px] font-bold ${active ? 'text-white' : 'text-white/25'}`}>
                 {label}
               </span>
             </Link>
