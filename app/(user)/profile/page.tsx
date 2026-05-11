@@ -1,15 +1,15 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { CheckCircle, User, Briefcase, CreditCard, MapPin } from 'lucide-react'
+import { CheckCircle, User, Briefcase, CreditCard, MapPin, ChevronRight } from 'lucide-react'
 
 type Section = 'personal' | 'address' | 'employment' | 'banking'
 
 const SECTIONS: { id: Section; label: string; icon: React.ElementType; desc: string }[] = [
-  { id: 'personal', label: 'Personal', icon: User, desc: 'Name, DOB, documents' },
-  { id: 'address', label: 'Address', icon: MapPin, desc: 'Where you live now' },
+  { id: 'personal', label: 'Personal', icon: User, desc: 'Name & documents' },
+  { id: 'address', label: 'Address', icon: MapPin, desc: 'Where you live' },
   { id: 'employment', label: 'Employment', icon: Briefcase, desc: 'Work in Germany' },
-  { id: 'banking', label: 'Banking', icon: CreditCard, desc: 'Refund destination' },
+  { id: 'banking', label: 'Banking', icon: CreditCard, desc: 'Refund account' },
 ]
 
 const COUNTRIES = [
@@ -39,29 +39,18 @@ export default function ProfilePage() {
       if (data) {
         setForm(prev => ({
           ...prev,
-          first_name: data.first_name ?? '',
-          last_name: data.last_name ?? '',
-          date_of_birth: data.date_of_birth ?? '',
-          nationality: data.nationality ?? '',
-          phone: data.phone ?? '',
-          country_of_residence: data.country_of_residence ?? '',
-          city: data.city ?? '',
-          address: data.address ?? '',
-          passport_number: data.passport_number ?? '',
-          document_type: data.document_type ?? '',
-          issuing_country: data.issuing_country ?? '',
-          document_expiry: data.document_expiry ?? '',
-          tax_id: data.tax_id ?? '',
-          student_status: data.student_status ?? false,
-          university: data.university ?? '',
-          employer_name: data.employer_name ?? '',
-          work_start: data.work_start ?? '',
-          work_end: data.work_end ?? '',
+          first_name: data.first_name ?? '', last_name: data.last_name ?? '',
+          date_of_birth: data.date_of_birth ?? '', nationality: data.nationality ?? '',
+          phone: data.phone ?? '', country_of_residence: data.country_of_residence ?? '',
+          city: data.city ?? '', address: data.address ?? '',
+          passport_number: data.passport_number ?? '', document_type: data.document_type ?? '',
+          issuing_country: data.issuing_country ?? '', document_expiry: data.document_expiry ?? '',
+          tax_id: data.tax_id ?? '', student_status: data.student_status ?? false,
+          university: data.university ?? '', employer_name: data.employer_name ?? '',
+          work_start: data.work_start ?? '', work_end: data.work_end ?? '',
           gross_income_eur: data.gross_income_eur?.toString() ?? '',
-          bank_name: data.bank_name ?? '',
-          iban: data.iban ?? '',
-          swift_bic: data.swift_bic ?? '',
-          bank_account_holder: data.bank_account_holder ?? '',
+          bank_name: data.bank_name ?? '', iban: data.iban ?? '',
+          swift_bic: data.swift_bic ?? '', bank_account_holder: data.bank_account_holder ?? '',
           bank_country: data.bank_country ?? '',
         }))
       }
@@ -85,75 +74,75 @@ export default function ProfilePage() {
     setTimeout(() => setSaved(false), 2500)
   }
 
-  const inp = 'w-full bg-gray-50 border border-gray-200 hover:border-gray-300 focus:border-brand-red focus:bg-white rounded-2xl px-4 py-3.5 text-sm text-brand-navy outline-none transition-all placeholder:text-gray-300'
-  const lbl = 'block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2'
+  const inp = 'w-full bg-gray-50 border border-black/[0.07] hover:border-black/[0.12] focus:border-brand-red/50 focus:bg-white rounded-xl px-4 py-3.5 text-sm text-brand-navy outline-none transition-all duration-150 placeholder:text-gray-300'
+  const lbl = 'block text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1.5'
 
   const activeSection = SECTIONS.find(s => s.id === active)!
   const sectionIndex = SECTIONS.findIndex(s => s.id === active)
 
+  const goNext = () => {
+    const nextIdx = sectionIndex + 1
+    if (nextIdx < SECTIONS.length) setActive(SECTIONS[nextIdx].id)
+  }
+
   return (
-    <div className="space-y-5">
-      <div className="pt-2">
-        <p className="text-xs font-bold text-brand-red uppercase tracking-widest mb-1">Profile</p>
-        <h1 className="text-3xl font-black text-brand-navy tracking-tight">Your profile</h1>
-        <p className="text-gray-400 text-sm mt-1">Complete all sections for your tax return</p>
+    <div className="space-y-4">
+      <div className="pt-1">
+        <p className="text-[11px] font-bold text-brand-red uppercase tracking-widest mb-0.5">Profile</p>
+        <h1 className="text-2xl sm:text-3xl font-black text-brand-navy tracking-tight">Your profile</h1>
+        <p className="text-gray-400 text-sm mt-0.5">Complete all sections for your tax return</p>
       </div>
 
-      {/* Section tabs */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-        {SECTIONS.map(({ id, label, icon: Icon, desc }, i) => {
+      {/* Section tabs — horizontal scroll on mobile */}
+      <div className="flex gap-2 overflow-x-auto pb-1 -mx-4 px-4 scrollbar-hide">
+        {SECTIONS.map(({ id, label, icon: Icon }, i) => {
           const isActive = active === id
           return (
             <button
               key={id}
               onClick={() => setActive(id)}
-              className={`flex flex-col items-start p-4 rounded-2xl border text-left transition-all ${
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border whitespace-nowrap text-sm font-bold transition-all duration-150 active:scale-95 shrink-0 ${
                 isActive
-                  ? 'bg-brand-navy border-brand-navy text-white shadow-lg shadow-brand-navy/15'
-                  : 'bg-white border-gray-100 text-brand-navy hover:border-gray-200 hover:shadow-sm'
+                  ? 'bg-brand-navy border-brand-navy text-white shadow-md shadow-brand-navy/15'
+                  : 'bg-white border-black/[0.07] text-gray-500 hover:text-brand-navy hover:border-black/[0.12]'
               }`}
             >
-              <div className="flex items-center justify-between w-full mb-2">
-                <Icon size={15} className={isActive ? 'text-white' : 'text-brand-red'} />
-                <span className={`text-xs font-black ${isActive ? 'text-white/40' : 'text-gray-200'}`}>
-                  0{i + 1}
-                </span>
-              </div>
-              <span className="text-sm font-bold">{label}</span>
-              <span className={`text-xs mt-0.5 ${isActive ? 'text-white/45' : 'text-gray-400'}`}>{desc}</span>
+              <Icon size={13} className={isActive ? 'text-white' : 'text-brand-red'} strokeWidth={2.2} />
+              <span>{label}</span>
+              <span className={`text-[10px] font-black ${isActive ? 'text-white/40' : 'text-gray-200'}`}>0{i + 1}</span>
             </button>
           )
         })}
       </div>
 
       {/* Form card */}
-      <div className="bg-white border border-gray-100 rounded-3xl shadow-sm overflow-hidden">
+      <div className="bg-white border border-black/[0.06] rounded-2xl shadow-sm overflow-hidden">
         {/* Card header */}
-        <div className="bg-gradient-to-r from-gray-50 to-white border-b border-gray-100 px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 bg-brand-navy rounded-xl flex items-center justify-center">
-              <activeSection.icon size={16} className="text-white" />
+        <div className="flex items-center justify-between px-5 py-3.5 border-b border-gray-50 bg-gray-50/50">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 bg-brand-navy rounded-xl flex items-center justify-center">
+              <activeSection.icon size={14} className="text-white" strokeWidth={2.2} />
             </div>
             <div>
-              <h2 className="font-bold text-brand-navy text-sm">{activeSection.label}</h2>
-              <p className="text-xs text-gray-400">{activeSection.desc}</p>
+              <p className="font-bold text-brand-navy text-sm">{activeSection.label}</p>
+              <p className="text-[11px] text-gray-400">{activeSection.desc}</p>
             </div>
           </div>
-          <span className="text-xs text-gray-300 font-bold">{sectionIndex + 1} / {SECTIONS.length}</span>
+          <span className="text-xs text-gray-300 font-bold">{sectionIndex + 1}/{SECTIONS.length}</span>
         </div>
 
-        <div className="p-6">
+        <div className="p-5">
           <div className="space-y-4">
             {active === 'personal' && (
               <>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className={lbl}>First name</label>
-                    <input className={inp} value={form.first_name} onChange={e => set('first_name', e.target.value)} placeholder="Ana" />
+                    <input className={inp} value={form.first_name} onChange={e => set('first_name', e.target.value)} placeholder="Ana" autoComplete="given-name" />
                   </div>
                   <div>
                     <label className={lbl}>Last name</label>
-                    <input className={inp} value={form.last_name} onChange={e => set('last_name', e.target.value)} placeholder="Popovic" />
+                    <input className={inp} value={form.last_name} onChange={e => set('last_name', e.target.value)} placeholder="Popovic" autoComplete="family-name" />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
@@ -171,7 +160,7 @@ export default function ProfilePage() {
                 </div>
                 <div>
                   <label className={lbl}>Phone number</label>
-                  <input className={inp} value={form.phone} onChange={e => set('phone', e.target.value)} placeholder="+389 70 123 456" />
+                  <input className={inp} value={form.phone} onChange={e => set('phone', e.target.value)} placeholder="+389 70 123 456" type="tel" autoComplete="tel" />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
@@ -183,7 +172,7 @@ export default function ProfilePage() {
                     </select>
                   </div>
                   <div>
-                    <label className={lbl}>Document number</label>
+                    <label className={lbl}>Number</label>
                     <input className={inp} value={form.passport_number} onChange={e => set('passport_number', e.target.value)} placeholder="AB123456" />
                   </div>
                 </div>
@@ -201,8 +190,8 @@ export default function ProfilePage() {
                   </div>
                 </div>
                 <div>
-                  <label className={lbl}>Tax ID (Steuer-ID) — if known</label>
-                  <input className={inp} value={form.tax_id} onChange={e => set('tax_id', e.target.value)} placeholder="12 345 678 901" />
+                  <label className={lbl}>Tax ID (Steuer-ID) — optional</label>
+                  <input className={`${inp} font-mono`} value={form.tax_id} onChange={e => set('tax_id', e.target.value)} placeholder="12 345 678 901" />
                 </div>
               </>
             )}
@@ -218,23 +207,23 @@ export default function ProfilePage() {
                 </div>
                 <div>
                   <label className={lbl}>City</label>
-                  <input className={inp} value={form.city} onChange={e => set('city', e.target.value)} placeholder="Skopje" />
+                  <input className={inp} value={form.city} onChange={e => set('city', e.target.value)} placeholder="Skopje" autoComplete="address-level2" />
                 </div>
                 <div>
                   <label className={lbl}>Street address</label>
-                  <input className={inp} value={form.address} onChange={e => set('address', e.target.value)} placeholder="Ul. Makedonija 12" />
+                  <input className={inp} value={form.address} onChange={e => set('address', e.target.value)} placeholder="Ul. Makedonija 12" autoComplete="street-address" />
                 </div>
               </>
             )}
 
             {active === 'employment' && (
               <>
-                <label className="flex items-center gap-3 p-4 bg-gray-50 rounded-2xl cursor-pointer hover:bg-gray-100 transition-colors">
-                  <div className={`w-10 h-6 rounded-full transition-colors relative shrink-0 ${form.student_status ? 'bg-brand-red' : 'bg-gray-200'}`}>
-                    <div className={`w-4 h-4 bg-white rounded-full absolute top-1 transition-all shadow-sm ${form.student_status ? 'left-5' : 'left-1'}`} />
+                <label className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl cursor-pointer hover:bg-gray-100 active:bg-gray-200 transition-colors">
+                  <div className={`w-11 h-6 rounded-full transition-colors relative shrink-0 ${form.student_status ? 'bg-brand-red' : 'bg-gray-200'}`}>
+                    <div className={`w-4 h-4 bg-white rounded-full absolute top-1 transition-all shadow-sm ${form.student_status ? 'left-6' : 'left-1'}`} />
                   </div>
                   <input type="checkbox" className="hidden" checked={form.student_status} onChange={e => set('student_status', e.target.checked)} />
-                  <span className="text-sm font-semibold text-brand-navy">I was a student while working in Germany</span>
+                  <span className="text-sm font-semibold text-brand-navy leading-snug">I was a student while working in Germany</span>
                 </label>
                 {form.student_status && (
                   <div>
@@ -258,28 +247,26 @@ export default function ProfilePage() {
                 </div>
                 <div>
                   <label className={lbl}>Gross income in Germany (EUR)</label>
-                  <input type="number" className={inp} value={form.gross_income_eur} onChange={e => set('gross_income_eur', e.target.value)} placeholder="15 000" />
+                  <input type="number" inputMode="decimal" className={inp} value={form.gross_income_eur} onChange={e => set('gross_income_eur', e.target.value)} placeholder="15 000" />
                 </div>
               </>
             )}
 
             {active === 'banking' && (
               <>
-                <div className="flex items-start gap-3 p-4 bg-blue-50 border border-blue-100 rounded-2xl">
-                  <div className="w-6 h-6 bg-blue-100 rounded-lg flex items-center justify-center shrink-0 mt-0.5">
-                    <CreditCard size={12} className="text-blue-600" />
-                  </div>
+                <div className="flex items-start gap-3 p-3.5 bg-blue-50 border border-blue-100 rounded-xl">
+                  <CreditCard size={14} className="text-blue-500 mt-0.5 shrink-0" />
                   <p className="text-xs text-blue-700 leading-relaxed">
-                    The refund will be transferred directly to this account. It must be in your name. We use bank-level encryption.
+                    Refund goes directly to this account. Must be in your name. Bank-level encryption.
                   </p>
                 </div>
                 <div>
                   <label className={lbl}>Account holder name</label>
-                  <input className={inp} value={form.bank_account_holder} onChange={e => set('bank_account_holder', e.target.value)} placeholder="Ana Popovic" />
+                  <input className={inp} value={form.bank_account_holder} onChange={e => set('bank_account_holder', e.target.value)} placeholder="Ana Popovic" autoComplete="name" />
                 </div>
                 <div>
                   <label className={lbl}>IBAN</label>
-                  <input className={`${inp} font-mono`} value={form.iban} onChange={e => set('iban', e.target.value)} placeholder="MK07 1234 5678 9012 345" />
+                  <input className={`${inp} font-mono tracking-wide`} value={form.iban} onChange={e => set('iban', e.target.value)} placeholder="MK07 1234 5678 9012 345" />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
@@ -302,17 +289,29 @@ export default function ProfilePage() {
             )}
           </div>
 
-          <button
-            onClick={save}
-            disabled={saving}
-            className={`mt-6 w-full font-bold py-4 rounded-2xl transition-all text-sm flex items-center justify-center gap-2 ${
-              saved
-                ? 'bg-brand-success text-white'
-                : 'bg-brand-red hover:bg-red-500 text-white hover:shadow-xl hover:shadow-brand-red/20 disabled:opacity-50'
-            }`}
-          >
-            {saved ? <><CheckCircle size={16} /> Saved!</> : saving ? 'Saving...' : 'Save changes'}
-          </button>
+          {/* Actions */}
+          <div className="flex gap-2 mt-5">
+            <button
+              onClick={save}
+              disabled={saving}
+              className={`flex-1 font-bold py-3.5 rounded-xl transition-all duration-150 text-sm flex items-center justify-center gap-2 active:scale-[0.98] ${
+                saved
+                  ? 'bg-brand-success text-white'
+                  : 'bg-brand-red hover:bg-red-500 active:bg-red-600 text-white hover:shadow-lg hover:shadow-brand-red/15 disabled:opacity-50'
+              }`}
+            >
+              {saved ? <><CheckCircle size={15} /> Saved!</> : saving ? 'Saving…' : 'Save changes'}
+            </button>
+
+            {sectionIndex < SECTIONS.length - 1 && (
+              <button
+                onClick={goNext}
+                className="flex items-center gap-1.5 bg-gray-100 hover:bg-gray-200 active:bg-gray-300 text-brand-navy font-semibold px-4 py-3.5 rounded-xl text-sm transition-all active:scale-[0.98]"
+              >
+                Next <ChevronRight size={14} />
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>

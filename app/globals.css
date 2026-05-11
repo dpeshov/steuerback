@@ -2,25 +2,103 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300;0,14..32,400;0,14..32,500;0,14..32,600;0,14..32,700;0,14..32,800;0,14..32,900;1,14..32,400&family=JetBrains+Mono:wght@400;500&display=swap');
 
 :root {
-  --background: #F8F9FA;
+  --background: #F4F5F7;
   --foreground: #1A1A2E;
   --brand-red: #E63946;
   --brand-navy: #1A1A2E;
   --brand-success: #2DC653;
   --brand-warning: #F4A261;
+  --sat: env(safe-area-inset-top, 0px);
+  --sar: env(safe-area-inset-right, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+  --sal: env(safe-area-inset-left, 0px);
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 body {
   color: var(--foreground);
   background: var(--background);
   font-family: 'Inter', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overscroll-behavior-y: none;
+}
+
+/* Remove iOS tap highlight on all interactive elements */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* iOS input appearance reset */
+input,
+select,
+textarea,
+button {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+input[type='date'] {
+  -webkit-appearance: textfield;
+}
+
+/* Custom minimal scrollbar */
+::-webkit-scrollbar {
+  width: 3px;
+  height: 3px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #e2e8f0;
+  border-radius: 100vw;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #cbd5e1;
+}
+
+/* Touch feedback for buttons and links */
+button, a {
+  touch-action: manipulation;
+}
+
+/* Prevent zoom on input focus on iOS */
+@media screen and (max-width: 768px) {
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* Safe area bottom helper class */
+.pb-safe {
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}
+
+.mb-nav {
+  margin-bottom: calc(5rem + env(safe-area-inset-bottom, 0px));
 }
 
 @layer utilities {
   .text-balance {
     text-wrap: balance;
+  }
+  .active-scale {
+    @apply transition-transform active:scale-95;
+  }
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
   }
 }

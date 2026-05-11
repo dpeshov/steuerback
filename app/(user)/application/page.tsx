@@ -10,7 +10,7 @@ const REQUIREMENTS = [
   'Lohnsteuerbescheinigung from your employer',
   'Monthly payslips from Germany',
   'Passport or national ID',
-  'Your bank account IBAN for the transfer',
+  'Your bank account IBAN',
 ]
 
 export default function ApplicationPage() {
@@ -24,14 +24,10 @@ export default function ApplicationPage() {
     if (!taxYear) return
     setLoading(true)
     setError('')
-
     const { data: { user } } = await supabase.auth.getUser()
     const { error } = await supabase.from('applications').insert({
-      user_id: user!.id,
-      tax_year: taxYear,
-      status: 'draft',
+      user_id: user!.id, tax_year: taxYear, status: 'draft',
     })
-
     if (error) {
       setError(error.code === '23505'
         ? `You already have an application for ${taxYear}.`
@@ -39,44 +35,42 @@ export default function ApplicationPage() {
       setLoading(false)
       return
     }
-
     router.push('/profile')
   }
 
   return (
-    <div className="space-y-5">
-      <div className="pt-2">
-        <p className="text-xs font-bold text-brand-red uppercase tracking-widest mb-1">New application</p>
-        <h1 className="text-3xl font-black text-brand-navy tracking-tight">Pick a tax year</h1>
-        <p className="text-gray-400 text-sm mt-1">Select the year you worked in Germany</p>
+    <div className="space-y-4">
+      <div className="pt-1">
+        <p className="text-[11px] font-bold text-brand-red uppercase tracking-widest mb-0.5">New application</p>
+        <h1 className="text-2xl sm:text-3xl font-black text-brand-navy tracking-tight">Pick a tax year</h1>
+        <p className="text-gray-400 text-sm mt-0.5">The year you worked in Germany</p>
       </div>
 
-      {/* Year selector */}
-      <div className="bg-white border border-gray-100 rounded-3xl shadow-sm overflow-hidden">
-        <div className="px-6 pt-6 pb-0">
-          <div className="flex items-center gap-2 mb-5">
-            <div className="w-8 h-8 bg-brand-red/8 rounded-xl flex items-center justify-center">
-              <Calendar size={15} className="text-brand-red" />
+      <div className="bg-white border border-black/[0.06] rounded-2xl shadow-sm overflow-hidden">
+        <div className="px-5 pt-5 pb-0">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="w-7 h-7 bg-brand-red/8 rounded-xl flex items-center justify-center">
+              <Calendar size={13} className="text-brand-red" strokeWidth={2.2} />
             </div>
             <span className="font-bold text-brand-navy text-sm">Select tax year</span>
           </div>
 
-          <div className="grid grid-cols-3 gap-2.5 mb-6">
+          <div className="grid grid-cols-3 gap-2 mb-5">
             {TAX_YEARS.map(year => {
               const selected = taxYear === year
               return (
                 <button
                   key={year}
                   onClick={() => setTaxYear(year)}
-                  className={`relative py-5 rounded-2xl font-black text-xl transition-all duration-200 ${
+                  className={`relative py-4 rounded-xl font-black text-lg transition-all duration-150 active:scale-[0.96] ${
                     selected
-                      ? 'bg-brand-navy text-white shadow-xl shadow-brand-navy/20 scale-[1.03]'
-                      : 'bg-gray-50 text-brand-navy hover:bg-gray-100 border border-gray-100 hover:border-gray-200'
+                      ? 'bg-brand-navy text-white shadow-lg shadow-brand-navy/20'
+                      : 'bg-gray-50 text-brand-navy hover:bg-gray-100 active:bg-gray-200 border border-black/[0.06]'
                   }`}
                 >
                   {year}
                   {selected && (
-                    <span className="absolute top-2 right-2 w-2 h-2 bg-brand-red rounded-full" />
+                    <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-brand-red rounded-full" />
                   )}
                 </button>
               )
@@ -84,16 +78,16 @@ export default function ApplicationPage() {
           </div>
         </div>
 
-        {/* What you need */}
-        <div className="mx-6 mb-6 bg-gray-50 rounded-2xl p-4">
+        {/* Requirements */}
+        <div className="mx-5 mb-5 bg-gray-50 rounded-xl p-4">
           <div className="flex items-center gap-2 mb-3">
-            <FileText size={13} className="text-gray-400" />
-            <span className="text-xs font-bold text-gray-500 uppercase tracking-wide">What you will need</span>
+            <FileText size={12} className="text-gray-400" />
+            <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">What you will need</span>
           </div>
           <div className="space-y-2">
             {REQUIREMENTS.map(req => (
               <div key={req} className="flex items-start gap-2.5">
-                <CheckCircle size={13} className="text-brand-success shrink-0 mt-0.5" />
+                <CheckCircle size={12} className="text-brand-success shrink-0 mt-0.5" strokeWidth={2.5} />
                 <span className="text-xs text-gray-500 leading-relaxed">{req}</span>
               </div>
             ))}
@@ -101,30 +95,28 @@ export default function ApplicationPage() {
         </div>
 
         {error && (
-          <div className="mx-6 mb-4 bg-red-50 border border-red-100 text-brand-red text-sm px-4 py-3 rounded-xl">
+          <div className="mx-5 mb-4 bg-red-50 border border-red-100 text-brand-red text-sm px-4 py-3 rounded-xl font-medium">
             {error}
           </div>
         )}
 
-        <div className="px-6 pb-6">
+        <div className="px-5 pb-5">
           <button
             onClick={handleStart}
             disabled={!taxYear || loading}
-            className="w-full bg-brand-red hover:bg-red-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold py-4 rounded-2xl transition-all hover:shadow-xl hover:shadow-brand-red/20 flex items-center justify-center gap-2 text-sm"
+            className="w-full bg-brand-red hover:bg-red-500 active:bg-red-600 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold py-4 rounded-xl transition-all duration-150 hover:shadow-xl hover:shadow-brand-red/15 flex items-center justify-center gap-2 text-sm"
           >
             {loading
-              ? 'Creating application...'
+              ? 'Creating…'
               : taxYear
                 ? `Start ${taxYear} application`
-                : 'Select a year to continue'}
-            {!loading && taxYear && <ArrowRight size={15} />}
+                : 'Select a year first'}
+            {!loading && taxYear && <ArrowRight size={15} strokeWidth={2.5} />}
           </button>
         </div>
       </div>
 
-      <p className="text-center text-xs text-gray-300">
-        One application per tax year. Free to start.
-      </p>
+      <p className="text-center text-xs text-gray-300 pb-1">One application per tax year · Free to start</p>
     </div>
   )
 }

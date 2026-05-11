@@ -10,9 +10,9 @@ export default async function UserLayout({ children }: { children: React.ReactNo
   if (!user) redirect('/login')
 
   return (
-    <div className="min-h-screen bg-brand-surface">
+    <div className="min-h-screen bg-[#F4F5F7]">
       <UserNav user={user} />
-      <main className="max-w-4xl mx-auto px-4 py-8 pb-24 md:pb-8">
+      <main className="max-w-2xl mx-auto px-4 pt-6 pb-28 md:pb-10" style={{ paddingBottom: 'calc(7rem + env(safe-area-inset-bottom, 0px))' }}>
         {children}
       </main>
       <MobileNav />
