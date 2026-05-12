@@ -2,7 +2,6 @@
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter, usePathname } from 'next/navigation'
-import type { User } from '@supabase/supabase-js'
 import { Shield, LayoutList, Users, LogOut } from 'lucide-react'
 
 const ADMIN_NAV = [
@@ -10,7 +9,7 @@ const ADMIN_NAV = [
   { href: '/admin/users', icon: Users, label: 'Users' },
 ]
 
-export default function AdminNav({ user: _user }: { user: User }) {
+export default function AdminNav() {
   const router = useRouter()
   const pathname = usePathname()
   const supabase = createClient()
