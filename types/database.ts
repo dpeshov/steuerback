@@ -118,7 +118,35 @@ export interface Database {
           profile_complete?: boolean
           updated_at?: string
         }
-        Update: Partial<Database['public']['Tables']['profiles']['Insert']>
+        Update: {
+          first_name?: string | null
+          last_name?: string | null
+          date_of_birth?: string | null
+          nationality?: string | null
+          phone?: string | null
+          country_of_residence?: string | null
+          city?: string | null
+          address?: string | null
+          preferred_language?: string
+          passport_number?: string | null
+          document_type?: string | null
+          issuing_country?: string | null
+          document_expiry?: string | null
+          tax_id?: string | null
+          student_status?: boolean | null
+          university?: string | null
+          employer_name?: string | null
+          work_start?: string | null
+          work_end?: string | null
+          gross_income_eur?: number | null
+          bank_name?: string | null
+          iban?: string | null
+          swift_bic?: string | null
+          bank_account_holder?: string | null
+          bank_country?: string | null
+          profile_complete?: boolean
+          updated_at?: string
+        }
       }
       applications: {
         Row: {
@@ -147,7 +175,18 @@ export interface Database {
           utm_medium?: string | null
           utm_campaign?: string | null
         }
-        Update: Partial<Database['public']['Tables']['applications']['Insert']>
+        Update: {
+          tax_year?: number
+          country?: string
+          status?: ApplicationStatus
+          payment_status?: PaymentStatus
+          utm_source?: string | null
+          utm_medium?: string | null
+          utm_campaign?: string | null
+          updated_at?: string
+          submitted_at?: string | null
+          completed_at?: string | null
+        }
       }
       documents: {
         Row: {
@@ -177,7 +216,17 @@ export interface Database {
           reviewed_by?: string | null
           reviewed_at?: string | null
         }
-        Update: Partial<Database['public']['Tables']['documents']['Insert']>
+        Update: {
+          document_type?: DocumentType
+          file_path?: string
+          file_name?: string
+          file_size?: number
+          mime_type?: string
+          review_status?: DocumentReviewStatus
+          admin_note?: string | null
+          reviewed_by?: string | null
+          reviewed_at?: string | null
+        }
       }
       payments: {
         Row: {
@@ -203,7 +252,15 @@ export interface Database {
           stripe_checkout_session_id?: string | null
           paid_at?: string | null
         }
-        Update: Partial<Database['public']['Tables']['payments']['Insert']>
+        Update: {
+          amount?: number
+          currency?: string
+          payment_type?: PaymentType
+          status?: PaymentStatus
+          stripe_payment_intent_id?: string | null
+          stripe_checkout_session_id?: string | null
+          paid_at?: string | null
+        }
       }
       notes: {
         Row: {
@@ -221,7 +278,10 @@ export interface Database {
           created_by: string
           is_public?: boolean
         }
-        Update: Partial<Database['public']['Tables']['notes']['Insert']>
+        Update: {
+          text?: string
+          is_public?: boolean
+        }
       }
       status_logs: {
         Row: {
@@ -241,7 +301,12 @@ export interface Database {
           changed_by: string
           reason?: string | null
         }
-        Update: Partial<Database['public']['Tables']['status_logs']['Insert']>
+        Update: {
+          old_status?: string | null
+          new_status?: string
+          changed_by?: string
+          reason?: string | null
+        }
       }
       notifications: {
         Row: {
@@ -261,7 +326,12 @@ export interface Database {
           body: string
           is_read?: boolean
         }
-        Update: Partial<Database['public']['Tables']['notifications']['Insert']>
+        Update: {
+          type?: string
+          title?: string
+          body?: string
+          is_read?: boolean
+        }
       }
       activity_logs: {
         Row: {
@@ -283,7 +353,13 @@ export interface Database {
           metadata?: Json | null
           ip_address?: string | null
         }
-        Update: Partial<Database['public']['Tables']['activity_logs']['Insert']>
+        Update: {
+          action?: string
+          entity_type?: string | null
+          entity_id?: string | null
+          metadata?: Json | null
+          ip_address?: string | null
+        }
       }
     }
   }
