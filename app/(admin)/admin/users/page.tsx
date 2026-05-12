@@ -1,0 +1,220 @@
+import { createAdminClient } from '@/lib/supabase/server'
+import Link from 'next/link'
+import { Users, FileText, CheckCircle, Clock, UserX, ChevronRight } from 'lucide-react'
+
+const STATUS_BADGE: Record<string, string> = {
+  completed:           'bg-green-100 text-green-700',
+  submitted:           'bg-cyan-100 text-cyan-700',
+  in_review:           'bg-indigo-100 text-indigo-700',
+  ready_for_submission:'bg-teal-100 text-teal-700',
+  ready_for_payment:   'bg-blue-100 text-blue-700',
+  paid:                'bg-purple-100 text-purple-700',
+  missing_documents:   'bg-red-100 text-red-700',
+  documents_pending:   'bg-yellow-100 text-yellow-700',
+  profile_incomplete:  'bg-orange-100 text-orange-700',
+  draft:               'bg-gray-100 text-gray-500',
+  rejected:            'bg-gray-200 text-gray-500',
+}
+
+const STATUS_LABELS: Record<string, string> = {
+  completed:           'Completed',
+  submitted:           'Submitted',
+  in_review:           'In review',
+  ready_for_submission:'Ready to submit',
+  ready_for_payment:   'Awaiting payment',
+  paid:                'Paid',
+  missing_documents:   'Docs missing',
+  documents_pending:   'Docs pending',
+  profile_incomplete:  'Profile incomplete',
+  draft:               'Draft',
+  rejected:            'Rejected',
+}
+
+export default async function AdminUsersPage() {
+  const supabase = await createAdminClient()
+
+  const { data: users } = await supabase
+    .from('users')
+    .select(`
+      id, email, role, created_at, is_active,
+      profiles (first_name, last_name, nationality, city, country_of_residence, profile_complete, gross_income_eur, employer_name),
+      applications (id, tax_year, status, payment_status, created_at)
+    `)
+    .order('created_at', { ascending: false })
+
+  const total      = users?.length ?? 0
+  const active     = users?.filter(u => u.is_active).length ?? 0
+  const withApp    = users?.filter(u => (u.applications as unknown[]).length > 0).length ?? 0
+  const completed  = users?.filter(u =>
+    (u.applications as { status: string }[]).some(a => a.status === 'completed')
+  ).length ?? 0
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-brand-navy">Users</h1>
+          <p className="text-gray-500 text-sm mt-1">{total} registered accounts</p>
+        </div>
+      </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {[
+          { label: 'Total users',    value: total,    icon: Users,       color: 'text-brand-red' },
+          { label: 'Active',         value: active,   icon: Clock,       color: 'text-blue-500' },
+          { label: 'Have application',value: withApp, icon: FileText,    color: 'text-indigo-500' },
+          { label: 'Completed refund',value: completed,icon: CheckCircle,color: 'text-brand-success' },
+        ].map(({ label, value, icon: Icon, color }) => (
+          <div key={label} className="bg-white rounded-2xl p-5 shadow-sm">
+            <Icon size={20} className={`${color} mb-3`} />
+            <p className="text-3xl font-bold text-brand-navy">{value}</p>
+            <p className="text-sm text-gray-500 mt-1">{label}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Table */}
+      <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+        <div className="hidden md:block overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-gray-100 text-left">
+                <th className="px-6 py-4 font-semibold text-gray-500">User</th>
+                <th className="px-6 py-4 font-semibold text-gray-500">Location</th>
+                <th className="px-6 py-4 font-semibold text-gray-500">Employer</th>
+                <th className="px-6 py-4 font-semibold text-gray-500">Applications</th>
+                <th className="px-6 py-4 font-semibold text-gray-500">Joined</th>
+                <th className="px-6 py-4 font-semibold text-gray-500"></th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-50">
+              {users?.map(user => {
+                const profile = user.profiles as { first_name?: string; last_name?: string; nationality?: string; city?: string; country_of_residence?: string; profile_complete?: boolean; gross_income_eur?: number; employer_name?: string } | null
+                const apps = user.applications as { id: string; tax_year: number; status: string; payment_status: string }[]
+                const latestApp = apps?.[0]
+                const fullName = [profile?.first_name, profile?.last_name].filter(Boolean).join(' ')
+
+                return (
+                  <tr key={user.id} className="hover:bg-gray-50 transition-colors">
+                    {/* User */}
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-full bg-brand-navy/8 flex items-center justify-center shrink-0">
+                          <span className="text-xs font-bold text-brand-navy uppercase">
+                            {(profile?.first_name?.[0] ?? user.email[0]).toUpperCase()}
+                          </span>
+                        </div>
+                        <div>
+                          <p className="font-semibold text-brand-navy leading-tight">
+                            {fullName || <span className="text-gray-400 font-normal italic">No name</span>}
+                          </p>
+                          <p className="text-xs text-gray-400 mt-0.5">{user.email}</p>
+                        </div>
+                      </div>
+                    </td>
+
+                    {/* Location */}
+                    <td className="px-6 py-4">
+                      <p className="text-gray-700">{profile?.city ?? '—'}</p>
+                      <p className="text-xs text-gray-400">{profile?.nationality ?? ''}</p>
+                    </td>
+
+                    {/* Employer */}
+                    <td className="px-6 py-4">
+                      <p className="text-gray-700 truncate max-w-[180px]">{profile?.employer_name ?? '—'}</p>
+                      {profile?.gross_income_eur && (
+                        <p className="text-xs text-gray-400">€{Number(profile.gross_income_eur).toLocaleString()}</p>
+                      )}
+                    </td>
+
+                    {/* Applications */}
+                    <td className="px-6 py-4">
+                      {apps.length === 0 ? (
+                        <span className="text-gray-400 text-xs">None</span>
+                      ) : (
+                        <div className="flex flex-col gap-1">
+                          {apps.slice(0, 2).map(app => (
+                            <div key={app.id} className="flex items-center gap-2">
+                              <span className="text-xs text-gray-500 w-8">{app.tax_year}</span>
+                              <span className={`px-2 py-0.5 rounded-full text-[11px] font-semibold ${STATUS_BADGE[app.status] ?? 'bg-gray-100 text-gray-500'}`}>
+                                {STATUS_LABELS[app.status] ?? app.status}
+                              </span>
+                            </div>
+                          ))}
+                          {apps.length > 2 && (
+                            <span className="text-xs text-gray-400">+{apps.length - 2} more</span>
+                          )}
+                        </div>
+                      )}
+                    </td>
+
+                    {/* Joined */}
+                    <td className="px-6 py-4 text-gray-400 text-xs">
+                      {new Date(user.created_at).toLocaleDateString('en-GB')}
+                    </td>
+
+                    {/* Action */}
+                    <td className="px-6 py-4">
+                      <Link
+                        href={`/admin/users/${user.id}`}
+                        className="flex items-center gap-1 text-brand-red text-sm font-medium hover:underline"
+                      >
+                        View <ChevronRight size={13} />
+                      </Link>
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Mobile card list */}
+        <div className="md:hidden divide-y divide-gray-100">
+          {users?.map(user => {
+            const profile = user.profiles as { first_name?: string; last_name?: string; nationality?: string; city?: string; employer_name?: string; gross_income_eur?: number } | null
+            const apps = user.applications as { id: string; tax_year: number; status: string }[]
+            const latestApp = apps?.[0]
+            const fullName = [profile?.first_name, profile?.last_name].filter(Boolean).join(' ')
+
+            return (
+              <div key={user.id} className="px-4 py-4 flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-brand-navy/8 flex items-center justify-center shrink-0">
+                  <span className="text-sm font-bold text-brand-navy uppercase">
+                    {(profile?.first_name?.[0] ?? user.email[0]).toUpperCase()}
+                  </span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-brand-navy text-sm truncate">
+                    {fullName || user.email}
+                  </p>
+                  <p className="text-xs text-gray-400 truncate">{user.email}</p>
+                  <div className="flex items-center gap-2 mt-1">
+                    {latestApp && (
+                      <span className={`px-2 py-0.5 rounded-full text-[11px] font-semibold ${STATUS_BADGE[latestApp.status] ?? 'bg-gray-100 text-gray-500'}`}>
+                        {STATUS_LABELS[latestApp.status] ?? latestApp.status}
+                      </span>
+                    )}
+                    <span className="text-xs text-gray-400">{profile?.city ?? ''}</span>
+                  </div>
+                </div>
+                <Link href={`/admin/users/${user.id}`}>
+                  <ChevronRight size={18} className="text-gray-400" />
+                </Link>
+              </div>
+            )
+          })}
+        </div>
+
+        {!users?.length && (
+          <div className="flex flex-col items-center justify-center py-16 gap-3">
+            <UserX size={32} className="text-gray-300" />
+            <p className="text-gray-400 text-sm">No users yet</p>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
