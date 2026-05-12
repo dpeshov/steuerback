@@ -3,13 +3,14 @@ import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { CheckCircle, XCircle, AlertCircle, Clock, ExternalLink } from 'lucide-react'
+import type { DocumentReviewStatus } from '@/types/database'
 
 type Doc = {
   id: string
   document_type: string
   file_name: string
   file_path: string
-  review_status: string
+  review_status: DocumentReviewStatus
   admin_note: string | null
   created_at: string
 }
@@ -33,7 +34,7 @@ const DOC_LABELS: Record<string, string> = {
 }
 
 export default function DocumentReviewer({ doc }: { doc: Doc }) {
-  const [status, setStatus] = useState(doc.review_status)
+  const [status, setStatus] = useState<DocumentReviewStatus>(doc.review_status)
   const [note, setNote] = useState(doc.admin_note ?? '')
   const [expanded, setExpanded] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -88,7 +89,7 @@ export default function DocumentReviewer({ doc }: { doc: Doc }) {
             <label className="block text-xs font-medium text-gray-500 mb-1">Review status</label>
             <select
               value={status}
-              onChange={e => setStatus(e.target.value)}
+              onChange={e => setStatus(e.target.value as DocumentReviewStatus)}
               className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-red/30"
             >
               <option value="pending">Pending</option>
