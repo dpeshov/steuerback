@@ -25,7 +25,14 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const cookieStore = await cookies()
   const raw = cookieStore.get('locale')?.value ?? 'en'
   const locale = LOCALES.includes(raw as (typeof LOCALES)[number]) ? raw : 'en'
-  const messages = (await import(`../messages/${locale}.json`)).default
+  let messages: Record<string, unknown> = {}
+  try {
+    messages = (await import(`../messages/${locale}.json`)).default
+  } catch {
+    try {
+      messages = (await import('../messages/en.json')).default
+    } catch { /* no-op */ }
+  }
 
   return (
     <html lang={locale}>
