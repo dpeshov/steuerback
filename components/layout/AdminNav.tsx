@@ -67,6 +67,7 @@ export default function AdminNav() {
             <span className="hidden md:block">Sign out</span>
           </button>
         </div>
+      </div>
     </header>
   )
 }
