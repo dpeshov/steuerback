@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { LayoutDashboard, FileText, Clock, User, LogOut } from 'lucide-react'
 import type { User as SupabaseUser } from '@supabase/supabase-js'
+import LanguageSwitcher from '@/components/LanguageSwitcher'
 
 const NAV = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
@@ -58,6 +59,7 @@ export default function UserNav({ user }: { user: SupabaseUser }) {
 
         {/* Right side */}
         <div className="flex items-center gap-2">
+          <LanguageSwitcher />
           <div className="hidden md:flex items-center gap-2 bg-gray-50 border border-black/[0.06] rounded-xl px-3 py-1.5">
             <div className="w-5 h-5 bg-brand-navy rounded-md flex items-center justify-center shrink-0">
               <span className="text-white text-[9px] font-black leading-none">{initials}</span>

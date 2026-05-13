@@ -2,6 +2,7 @@
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
 import { Menu, X } from 'lucide-react'
+import LanguageSwitcher from '@/components/LanguageSwitcher'
 
 export default function Navbar() {
   const [open, setOpen] = useState(false)
@@ -35,6 +36,8 @@ export default function Navbar() {
             </Link>
           ))}
           <div className="w-px h-5 bg-white/10 mx-2" />
+          <LanguageSwitcher dark />
+          <div className="w-px h-5 bg-white/10 mx-1" />
           <Link href="/login" className="px-4 py-2 text-white/60 hover:text-white transition-colors">
             Login
           </Link>

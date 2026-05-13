@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter, usePathname } from 'next/navigation'
 import { Shield, LayoutList, Users, LogOut } from 'lucide-react'
+import LanguageSwitcher from '@/components/LanguageSwitcher'
 
 const ADMIN_NAV = [
   { href: '/admin/applications', icon: LayoutList, label: 'Applications' },
@@ -56,14 +57,16 @@ export default function AdminNav() {
           </nav>
         </div>
 
-        <button
-          onClick={signOut}
-          className="flex items-center gap-1.5 text-xs text-white/35 hover:text-white bg-white/5 hover:bg-white/10 border border-white/8 px-3 py-2 rounded-xl transition-all font-medium"
-        >
-          <LogOut size={13} />
-          <span className="hidden md:block">Sign out</span>
-        </button>
-      </div>
+        <div className="flex items-center gap-2">
+          <LanguageSwitcher dark />
+          <button
+            onClick={signOut}
+            className="flex items-center gap-1.5 text-xs text-white/35 hover:text-white bg-white/5 hover:bg-white/10 border border-white/8 px-3 py-2 rounded-xl transition-all font-medium"
+          >
+            <LogOut size={13} />
+            <span className="hidden md:block">Sign out</span>
+          </button>
+        </div>
     </header>
   )
 }

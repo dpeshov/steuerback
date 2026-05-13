@@ -1,0 +1,116 @@
+﻿{
+  "common": {
+    "appName": "SteuerBack",
+    "loading": "Loading...",
+    "save": "Save",
+    "cancel": "Cancel",
+    "back": "Back",
+    "next": "Next",
+    "error": "Something went wrong. Please try again.",
+    "signOut": "Sign out",
+    "viewAll": "View all",
+    "learnMore": "Learn more"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "documents": "Documents",
+    "status": "Status",
+    "profile": "Profile",
+    "applications": "Applications",
+    "users": "Users",
+    "login": "Sign in",
+    "register": "Get started"
+  },
+  "landing": {
+    "heroTitle": "Your German tax refund. Simple.",
+    "heroSubtitle": "Worked in Germany? You likely paid too much tax. We get it back вЂ” fast, fully online, and trusted.",
+    "heroCta": "Check my eligibility",
+    "avgRefund": "в‚¬800",
+    "avgRefundLabel": "Avg. refund",
+    "daysLabel": "14 days",
+    "daysDesc": "To submission",
+    "clientsLabel": "2,000+",
+    "clientsDesc": "Clients served"
+  },
+  "auth": {
+    "signIn": "Sign in",
+    "register": "Create account",
+    "forgotPassword": "Forgot password?",
+    "email": "Email",
+    "password": "Password",
+    "confirmPassword": "Confirm password",
+    "noAccount": "Don't have an account?",
+    "haveAccount": "Already have an account?"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "subtitle": "Your application overview",
+    "welcome": "Hey, {name}",
+    "welcomeBack": "Welcome back",
+    "newApplication": "New application",
+    "noApplication": "No application yet",
+    "noApplicationDesc": "Start your German tax refund. Takes about 10 minutes.",
+    "startApplication": "Start application",
+    "profileCompletion": "Profile completion",
+    "profileComplete": "Profile complete вњ“",
+    "viewTimeline": "View timeline",
+    "payNow": "Pay now"
+  },
+  "profile": {
+    "title": "Your profile",
+    "subtitle": "Complete all sections for your tax return",
+    "personal": "Personal",
+    "address": "Address",
+    "employment": "Employment",
+    "banking": "Banking",
+    "firstName": "First name",
+    "lastName": "Last name",
+    "dateOfBirth": "Date of birth",
+    "nationality": "Nationality",
+    "phone": "Phone number",
+    "employer": "Employer name in Germany",
+    "iban": "IBAN",
+    "saved": "Saved!"
+  },
+  "documents": {
+    "title": "Your documents",
+    "subtitle": "Upload required files for your tax return",
+    "required": "Required",
+    "optional": "Optional",
+    "upload": "Upload",
+    "replace": "Replace",
+    "uploading": "Uploading...",
+    "noApplication": "No active application",
+    "noApplicationDesc": "Start an application first, then upload your documents here.",
+    "allUploaded": "вњ“ All required documents uploaded вЂ” our team will review them."
+  },
+  "status": {
+    "title": "Application status",
+    "draft": "Draft",
+    "profile_incomplete": "Profile Incomplete",
+    "documents_pending": "Documents Pending",
+    "ready_for_payment": "Ready for Payment",
+    "paid": "Paid",
+    "in_review": "In Review",
+    "missing_documents": "Missing Documents",
+    "ready_for_submission": "Ready for Submission",
+    "submitted": "Submitted",
+    "completed": "Completed",
+    "rejected": "Rejected"
+  },
+  "payment": {
+    "title": "Choose payment",
+    "upfrontLabel": "Pay now",
+    "upfrontDesc": "Faster processing, one-time card payment",
+    "upfrontPrice": "в‚¬70",
+    "deferredLabel": "Pay from refund",
+    "deferredDesc": "Deducted when you receive your money",
+    "deferredPrice": "в‚¬150",
+    "mostPopular": "Most popular",
+    "confirm": "Confirm agreement",
+    "payNow": "Pay в‚¬70 now",
+    "successTitle": "Payment confirmed!",
+    "successDesc": "Your payment was successful. Our team will start processing your refund shortly."
+  }
+}
+
