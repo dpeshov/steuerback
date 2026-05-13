@@ -1,8 +1,8 @@
 'use client'
 import { useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { STATUS_LABELS } from '@/lib/utils'
+import { updateApplicationStatus } from '@/app/actions/updateApplicationStatus'
 import type { ApplicationStatus } from '@/types/database'
 
 const ALL_STATUSES: ApplicationStatus[] = [
@@ -22,24 +22,11 @@ export default function StatusChanger({
   const [note, setNote] = useState('')
   const [saving, setSaving] = useState(false)
   const router = useRouter()
-  const supabase = createClient()
 
   const save = async () => {
     if (status === currentStatus) return
     setSaving(true)
-
-    const { data: { user } } = await supabase.auth.getUser()
-
-    await supabase.from('applications').update({ status, updated_at: new Date().toISOString() }).eq('id', applicationId)
-
-    await supabase.from('status_logs').insert({
-      application_id: applicationId,
-      old_status: currentStatus,
-      new_status: status,
-      changed_by: user?.id ?? 'admin',
-      reason: note || null,
-    })
-
+    await updateApplicationStatus(applicationId, status, currentStatus, note || null)
     setSaving(false)
     router.refresh()
   }

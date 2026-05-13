@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { CheckCircle, XCircle, AlertCircle, Clock, ExternalLink } from 'lucide-react'
+import { updateDocumentReview } from '@/app/actions/updateDocumentReview'
 import type { DocumentReviewStatus } from '@/types/database'
 
 type Doc = {
@@ -43,11 +44,7 @@ export default function DocumentReviewer({ doc }: { doc: Doc }) {
 
   const save = async () => {
     setSaving(true)
-    await supabase.from('documents').update({
-      review_status: status,
-      admin_note: note || null,
-      reviewed_at: new Date().toISOString(),
-    }).eq('id', doc.id)
+    await updateDocumentReview(doc.id, status, note || null)
     setSaving(false)
     router.refresh()
   }

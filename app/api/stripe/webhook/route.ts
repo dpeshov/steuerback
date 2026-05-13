@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { createClient as createSupabase } from '@supabase/supabase-js'
+import { sendEmail, statusChangeEmail } from '@/lib/email'
 import type { Database } from '@/types/database'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
@@ -57,6 +58,17 @@ export async function POST(req: NextRequest) {
       changed_by: session.metadata?.user_id ?? 'system',
       reason: 'Stripe upfront payment completed',
     })
+
+    const { data: app } = await supabase
+      .from('applications')
+      .select('tax_year, users(email)')
+      .eq('id', applicationId)
+      .single()
+
+    if (app) {
+      const email = (app.users as { email: string } | null)?.email
+      if (email) await sendEmail(statusChangeEmail(email, 'paid', app.tax_year))
+    }
   }
 
   return NextResponse.json({ received: true })
