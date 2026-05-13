@@ -1,5 +1,6 @@
 import { createAdminClient } from '@/lib/supabase/server'
 import Link from 'next/link'
+import { ChevronRight } from 'lucide-react'
 import { STATUS_LABELS } from '@/lib/utils'
 import type { ApplicationStatus } from '@/types/database'
 
@@ -33,57 +34,92 @@ export default async function AdminApplicationsPage() {
       </div>
 
       <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-gray-100 text-left">
-              <th className="px-6 py-4 font-semibold text-gray-500 font-medium">User</th>
-              <th className="px-6 py-4 font-semibold text-gray-500 font-medium">Year</th>
-              <th className="px-6 py-4 font-semibold text-gray-500 font-medium">Status</th>
-              <th className="px-6 py-4 font-semibold text-gray-500 font-medium">Payment</th>
-              <th className="px-6 py-4 font-semibold text-gray-500 font-medium">Created</th>
-              <th className="px-6 py-4 font-semibold text-gray-500 font-medium"></th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-50">
-            {applications?.map(app => {
-              const user = app.users as { email: string; id: string } | null
-              const status = app.status as ApplicationStatus
-              return (
-                <tr key={app.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-6 py-4 text-brand-navy font-medium">{user?.email ?? '—'}</td>
-                  <td className="px-6 py-4 text-gray-600">{app.tax_year}</td>
-                  <td className="px-6 py-4">
-                    <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${STATUS_COLORS[status] ?? 'bg-gray-100 text-gray-600'}`}>
+        {/* Desktop table */}
+        <div className="hidden md:block overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-gray-100 text-left">
+                <th className="px-6 py-4 font-semibold text-gray-500">User</th>
+                <th className="px-6 py-4 font-semibold text-gray-500">Year</th>
+                <th className="px-6 py-4 font-semibold text-gray-500">Status</th>
+                <th className="px-6 py-4 font-semibold text-gray-500">Payment</th>
+                <th className="px-6 py-4 font-semibold text-gray-500">Created</th>
+                <th className="px-6 py-4 font-semibold text-gray-500"></th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-50">
+              {applications?.map(app => {
+                const user = app.users as { email: string; id: string } | null
+                const status = app.status as ApplicationStatus
+                return (
+                  <tr key={app.id} className="hover:bg-gray-50 transition-colors">
+                    <td className="px-6 py-4 text-brand-navy font-medium truncate max-w-[200px]">{user?.email ?? '—'}</td>
+                    <td className="px-6 py-4 text-gray-600">{app.tax_year}</td>
+                    <td className="px-6 py-4">
+                      <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${STATUS_COLORS[status] ?? 'bg-gray-100 text-gray-600'}`}>
+                        {STATUS_LABELS[status] ?? status}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${
+                        app.payment_status === 'paid'    ? 'bg-green-100 text-green-700' :
+                        app.payment_status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
+                        'bg-gray-100 text-gray-500'
+                      }`}>
+                        {app.payment_status}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-gray-400 text-xs">
+                      {new Date(app.created_at).toLocaleDateString('en-GB')}
+                    </td>
+                    <td className="px-6 py-4">
+                      <Link href={`/admin/applications/${app.id}`} className="text-brand-red font-medium hover:underline text-sm">
+                        View →
+                      </Link>
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Mobile card list */}
+        <div className="md:hidden divide-y divide-gray-100">
+          {applications?.map(app => {
+            const user = app.users as { email: string; id: string } | null
+            const status = app.status as ApplicationStatus
+            return (
+              <Link
+                key={app.id}
+                href={`/admin/applications/${app.id}`}
+                className="flex items-center gap-3 px-4 py-4 hover:bg-gray-50 transition-colors"
+              >
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-brand-navy truncate">{user?.email ?? '—'}</p>
+                  <div className="flex items-center gap-2 mt-1 flex-wrap">
+                    <span className="text-xs text-gray-400">Tax {app.tax_year}</span>
+                    <span className={`px-2 py-0.5 rounded-full text-[11px] font-semibold ${STATUS_COLORS[status] ?? 'bg-gray-100 text-gray-600'}`}>
                       {STATUS_LABELS[status] ?? status}
                     </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${
-                      app.payment_status === 'paid' ? 'bg-green-100 text-green-700' :
+                    <span className={`px-2 py-0.5 rounded-full text-[11px] font-semibold ${
+                      app.payment_status === 'paid'    ? 'bg-green-100 text-green-700' :
                       app.payment_status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
                       'bg-gray-100 text-gray-500'
                     }`}>
                       {app.payment_status}
                     </span>
-                  </td>
-                  <td className="px-6 py-4 text-gray-400">
-                    {new Date(app.created_at).toLocaleDateString('en-GB')}
-                  </td>
-                  <td className="px-6 py-4">
-                    <Link href={`/admin/applications/${app.id}`} className="text-brand-red font-medium hover:underline">
-                      View →
-                    </Link>
-                  </td>
-                </tr>
-              )
-            })}
-            {!applications?.length && (
-              <tr>
-                <td colSpan={6} className="px-6 py-12 text-center text-gray-400">No applications yet</td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+                  </div>
+                </div>
+                <ChevronRight size={16} className="text-gray-400 shrink-0" />
+              </Link>
+            )
+          })}
+        </div>
+
+        {!applications?.length && (
+          <div className="px-6 py-12 text-center text-gray-400 text-sm">No applications yet</div>
+        )}
       </div>
     </div>
   )

@@ -1,5 +1,7 @@
 import { createAdminClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
+import Link from 'next/link'
+import { ArrowLeft } from 'lucide-react'
 import { STATUS_LABELS, formatDate } from '@/lib/utils'
 import type { ApplicationStatus } from '@/types/database'
 import StatusChanger from './StatusChanger'
@@ -54,14 +56,19 @@ export default async function ApplicationDetailPage({ params }: { params: Promis
 
   return (
     <div className="space-y-6">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-brand-navy">{user?.email ?? '—'}</h1>
-          <p className="text-gray-500 text-sm mt-1">Tax year {app.tax_year} · Application {id.slice(0, 8)}…</p>
+      <div>
+        <Link href="/admin/applications" className="inline-flex items-center gap-1.5 text-sm text-gray-400 hover:text-brand-navy transition-colors mb-4">
+          <ArrowLeft size={14} /> All applications
+        </Link>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h1 className="text-xl sm:text-2xl font-bold text-brand-navy break-all">{user?.email ?? '—'}</h1>
+            <p className="text-gray-500 text-sm mt-1">Tax year {app.tax_year} · {id.slice(0, 8)}…</p>
+          </div>
+          <span className="bg-brand-surface text-brand-navy text-sm font-semibold px-3 py-1.5 rounded-xl shrink-0">
+            {STATUS_LABELS[app.status as ApplicationStatus] ?? app.status}
+          </span>
         </div>
-        <span className="bg-brand-surface text-brand-navy text-sm font-semibold px-4 py-2 rounded-xl">
-          {STATUS_LABELS[app.status as ApplicationStatus] ?? app.status}
-        </span>
       </div>
 
       <div className="grid md:grid-cols-2 gap-6">

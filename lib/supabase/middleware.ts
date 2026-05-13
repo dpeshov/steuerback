@@ -30,7 +30,7 @@ export async function updateSession(request: NextRequest) {
   const pathname = request.nextUrl.pathname
 
   // Redirect unauthenticated users away from protected routes
-  const protectedPrefixes = ['/dashboard', '/profile', '/application', '/documents', '/payment', '/status', '/settings', '/admin']
+  const protectedPrefixes = ['/dashboard', '/profile', '/application', '/documents', '/pay', '/status', '/settings', '/admin']
   const isProtected = protectedPrefixes.some(p => pathname.startsWith(p))
 
   if (isProtected && !user) {
@@ -55,7 +55,7 @@ export async function updateSession(request: NextRequest) {
   }
 
   // Redirect authenticated users away from auth pages
-  const authRoutes = ['/login', '/register']
+  const authRoutes = ['/login', '/register', '/forgot-password']
   if (authRoutes.includes(pathname) && user) {
     const url = request.nextUrl.clone()
     url.pathname = '/dashboard'

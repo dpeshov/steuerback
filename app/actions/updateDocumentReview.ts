@@ -22,6 +22,11 @@ export async function updateDocumentReview(
   const supabase = await createAdminClient()
 
   const { data: { user: admin } } = await supabase.auth.getUser()
+  if (!admin) throw new Error('Unauthorized')
+
+  const { data: adminProfile } = await supabase
+    .from('users').select('role').eq('id', admin.id).single()
+  if (adminProfile?.role !== 'admin') throw new Error('Forbidden')
 
   await supabase.from('documents').update({
     review_status: status,
