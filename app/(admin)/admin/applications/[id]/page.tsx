@@ -9,7 +9,7 @@ import DocumentReviewer from './DocumentReviewer'
 
 export default async function ApplicationDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const supabase = await createAdminClient()
+  const supabase = createAdminClient()
 
   const { data: app } = await supabase
     .from('applications')

@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { STATUS_LABELS } from '@/lib/utils'
 
 export default async function AdminDashboard() {
-  const supabase = await createAdminClient()
+  const supabase = createAdminClient()
 
   const [
     { count: totalApps },

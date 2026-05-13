@@ -30,7 +30,7 @@ export default async function AdminApplicationsPage({
   searchParams: Promise<{ status?: string }>
 }) {
   const { status: statusFilter } = await searchParams
-  const supabase = await createAdminClient()
+  const supabase = createAdminClient()
 
   let query = supabase
     .from('applications')

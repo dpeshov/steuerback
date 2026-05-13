@@ -19,7 +19,7 @@ export async function updateDocumentReview(
   status: DocumentReviewStatus,
   note: string | null,
 ) {
-  const supabase = await createAdminClient()
+  const supabase = createAdminClient()
 
   const { data: { user: admin } } = await supabase.auth.getUser()
   if (!admin) throw new Error('Unauthorized')

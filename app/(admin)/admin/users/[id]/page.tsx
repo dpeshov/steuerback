@@ -35,7 +35,7 @@ const STATUS_LABELS: Record<string, string> = {
 
 export default async function AdminUserDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const supabase = await createAdminClient()
+  const supabase = createAdminClient()
 
   const { data: user } = await supabase
     .from('users')
