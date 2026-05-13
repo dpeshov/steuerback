@@ -1,13 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
-import Stripe from 'stripe'
 import { createClient } from '@/lib/supabase/server'
 
+// Dummy checkout — simulates upfront payment without Stripe
 export async function POST(req: NextRequest) {
-  if (!process.env.STRIPE_SECRET_KEY) {
-    return NextResponse.json({ error: 'Stripe not configured' }, { status: 503 })
-  }
-  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
-
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -16,7 +11,7 @@ export async function POST(req: NextRequest) {
 
   const { data: app } = await supabase
     .from('applications')
-    .select('id, status, tax_year')
+    .select('id, status')
     .eq('id', applicationId)
     .eq('user_id', user.id)
     .single()
@@ -25,29 +20,29 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid application' }, { status: 400 })
   }
 
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
-
-  const session = await stripe.checkout.sessions.create({
-    mode: 'payment',
-    payment_method_types: ['card'],
-    line_items: [{
-      price_data: {
-        currency: 'eur',
-        unit_amount: 7000,
-        product_data: {
-          name: `German Tax Refund — ${app.tax_year}`,
-          description: 'Upfront payment for SteuerBack tax refund service',
-        },
-      },
-      quantity: 1,
-    }],
-    metadata: {
-      application_id: applicationId,
-      user_id: user.id,
-    },
-    success_url: `${baseUrl}/pay/success?session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${baseUrl}/pay`,
+  await supabase.from('payments').insert({
+    application_id: applicationId,
+    amount: 70,
+    currency: 'EUR',
+    payment_type: 'upfront',
+    status: 'paid',
+    paid_at: new Date().toISOString(),
   })
 
-  return NextResponse.json({ url: session.url })
+  await supabase.from('applications').update({
+    status: 'paid',
+    payment_status: 'paid',
+    updated_at: new Date().toISOString(),
+  }).eq('id', applicationId)
+
+  await supabase.from('status_logs').insert({
+    application_id: applicationId,
+    old_status: 'ready_for_payment',
+    new_status: 'paid',
+    changed_by: user.id,
+    reason: 'Upfront payment (demo)',
+  })
+
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? ''
+  return NextResponse.json({ url: `${baseUrl}/pay/success` })
 }
