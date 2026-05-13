@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next'
+import { cookies } from 'next/headers'
 import { NextIntlClientProvider } from 'next-intl'
-import { getMessages, getLocale } from 'next-intl/server'
+import { LOCALES } from '@/i18n/request'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -21,13 +22,15 @@ export const viewport: Viewport = {
 }
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const locale = await getLocale()
-  const messages = await getMessages()
+  const cookieStore = await cookies()
+  const raw = cookieStore.get('locale')?.value ?? 'en'
+  const locale = LOCALES.includes(raw as (typeof LOCALES)[number]) ? raw : 'en'
+  const messages = (await import(`../messages/${locale}.json`)).default
 
   return (
     <html lang={locale}>
       <body className="antialiased">
-        <NextIntlClientProvider messages={messages}>
+        <NextIntlClientProvider locale={locale} messages={messages}>
           {children}
         </NextIntlClientProvider>
       </body>
