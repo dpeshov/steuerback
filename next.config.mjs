@@ -4,12 +4,6 @@ const withNextIntl = createNextIntlPlugin('./i18n/request.ts')
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-  typescript: {
-    ignoreBuildErrors: true,
-  },
   async headers() {
     return [
       {
@@ -27,4 +21,9 @@ const nextConfig = {
   },
 }
 
-export default withNextIntl(nextConfig)
+// Apply after withNextIntl so the plugin cannot override these
+const config = withNextIntl(nextConfig)
+config.eslint = { ignoreDuringBuilds: true }
+config.typescript = { ignoreBuildErrors: true }
+
+export default config
