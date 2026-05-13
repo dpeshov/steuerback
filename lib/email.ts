@@ -1,8 +1,12 @@
-import { Resend } from 'resend'
+import type { Resend } from 'resend'
 import type { ApplicationStatus } from '@/types/database'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
 const FROM = 'SteuerBack <no-reply@steuerback.com>'
+function getResend() {
+  if (!process.env.RESEND_API_KEY) return null
+  const { Resend: R } = require('resend')
+  return new R(process.env.RESEND_API_KEY) as InstanceType<typeof Resend>
+}
 
 // ─── Templates ───────────────────────────────────────────────────────────────
 
@@ -157,7 +161,9 @@ export function documentNeedsReuploadEmail(email: string, docLabel: string, admi
 // ─── Sender ───────────────────────────────────────────────────────────────────
 
 export async function sendEmail(payload: { from: string; to: string; subject: string; html: string } | null) {
-  if (!payload || !process.env.RESEND_API_KEY) return
+  if (!payload) return
+  const resend = getResend()
+  if (!resend) return
   try {
     await resend.emails.send(payload)
   } catch (e) {
