@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
-import { ArrowRight, FileText, Clock, User, Plus, ChevronRight, TrendingUp } from 'lucide-react'
+import { ArrowRight, FileText, Clock, User, Plus, ChevronRight, TrendingUp, CreditCard } from 'lucide-react'
 import { STATUS_MESSAGES, STATUS_LABELS } from '@/lib/utils'
 import type { ApplicationStatus } from '@/types/database'
 
@@ -84,12 +84,23 @@ export default async function DashboardPage() {
                 </span>
               )}
             </div>
-            <Link
-              href="/status"
-              className="inline-flex items-center gap-1.5 bg-white/8 hover:bg-white/12 active:bg-white/5 border border-white/10 text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition-all active:scale-95"
-            >
-              View timeline <ArrowRight size={13} />
-            </Link>
+            <div className="flex items-center gap-2 flex-wrap">
+              {status === 'ready_for_payment' && (
+                <Link
+                  href="/pay"
+                  className="inline-flex items-center gap-1.5 bg-brand-red hover:bg-red-500 active:bg-red-600 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition-all active:scale-95 shadow-lg shadow-brand-red/30"
+                >
+                  <CreditCard size={12} />
+                  Pay now
+                </Link>
+              )}
+              <Link
+                href="/status"
+                className="inline-flex items-center gap-1.5 bg-white/8 hover:bg-white/12 active:bg-white/5 border border-white/10 text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition-all active:scale-95"
+              >
+                View timeline <ArrowRight size={13} />
+              </Link>
+            </div>
           </div>
         </div>
       ) : (

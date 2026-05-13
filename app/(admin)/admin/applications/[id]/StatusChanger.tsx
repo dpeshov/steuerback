@@ -28,12 +28,15 @@ export default function StatusChanger({
     if (status === currentStatus) return
     setSaving(true)
 
+    const { data: { user } } = await supabase.auth.getUser()
+
     await supabase.from('applications').update({ status, updated_at: new Date().toISOString() }).eq('id', applicationId)
 
     await supabase.from('status_logs').insert({
       application_id: applicationId,
       old_status: currentStatus,
       new_status: status,
+      changed_by: user?.id ?? 'admin',
       reason: note || null,
     })
 
