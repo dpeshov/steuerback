@@ -1,7 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
-import { ArrowRight, FileText, Clock, User, Plus, ChevronRight, TrendingUp, CreditCard } from 'lucide-react'
-import { STATUS_MESSAGES, STATUS_LABELS } from '@/lib/utils'
+import { ArrowRight, FileText, Clock, User, Plus, ChevronRight, Send, CreditCard } from 'lucide-react'
+import { STATUS_LABELS } from '@/lib/utils'
+import { submitApplication } from '@/app/actions/submitApplication'
 import type { ApplicationStatus } from '@/types/database'
 
 const STATUS_COLOR: Record<ApplicationStatus, string> = {
@@ -18,6 +19,8 @@ const STATUS_COLOR: Record<ApplicationStatus, string> = {
   rejected:               'bg-gray-100 text-gray-500',
 }
 
+const SUBMITTABLE: ApplicationStatus[] = ['draft', 'profile_incomplete', 'documents_pending', 'paid', 'missing_documents']
+
 export default async function DashboardPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -29,9 +32,7 @@ export default async function DashboardPage() {
     .from('applications').select('*').eq('user_id', user!.id)
     .order('created_at', { ascending: false })
 
-  const latestApp = applications?.[0]
-  const status = latestApp?.status as ApplicationStatus | undefined
-  const statusInfo = status ? STATUS_MESSAGES[status] : null
+  const firstName = profile?.first_name
 
   const profileFields = profile ? [
     profile.first_name, profile.last_name, profile.date_of_birth,
@@ -40,76 +41,114 @@ export default async function DashboardPage() {
   ] : []
   const filledFields = profileFields.filter(Boolean).length
   const profilePct = profileFields.length ? Math.round((filledFields / profileFields.length) * 100) : 0
-  const firstName = profile?.first_name
 
   return (
     <div className="space-y-4">
-      {/* Page header */}
+      {/* Header */}
       <div className="flex items-start justify-between gap-3 pt-1">
         <div>
           <p className="text-[11px] font-bold text-brand-red uppercase tracking-widest mb-0.5">Dashboard</p>
           <h1 className="text-2xl sm:text-3xl font-black text-brand-navy tracking-tight leading-tight">
             {firstName ? `Hey, ${firstName}` : 'Welcome back'}
           </h1>
-          <p className="text-gray-400 text-sm mt-0.5">Your application overview</p>
+          <p className="text-gray-400 text-sm mt-0.5">Your applications overview</p>
         </div>
-        {!latestApp && (
-          <Link
-            href="/application"
-            className="flex items-center gap-1.5 bg-brand-red text-white font-bold text-sm px-4 py-2.5 rounded-xl hover:bg-red-500 active:bg-red-600 active:scale-95 transition-all shrink-0 shadow-sm shadow-brand-red/20"
-          >
-            <Plus size={15} strokeWidth={2.5} />
-            <span className="hidden sm:inline">New</span> application
-          </Link>
-        )}
+        <Link
+          href="/application"
+          className="flex items-center gap-1.5 bg-brand-red text-white font-bold text-sm px-4 py-2.5 rounded-xl hover:bg-red-500 active:bg-red-600 active:scale-95 transition-all shrink-0 shadow-sm shadow-brand-red/20"
+        >
+          <Plus size={15} strokeWidth={2.5} />
+          New
+        </Link>
       </div>
 
-      {/* Status card or empty state */}
-      {latestApp ? (
-        <div className="relative overflow-hidden bg-brand-navy rounded-2xl p-5 text-white shadow-lg shadow-brand-navy/15">
-          <div className="absolute -top-8 -right-8 w-48 h-48 bg-brand-red/15 rounded-full blur-[50px] pointer-events-none" />
-          <div className="absolute -bottom-8 -left-8 w-40 h-40 bg-blue-500/8 rounded-full blur-[40px] pointer-events-none" />
-          <div className="relative">
-            <div className="flex items-start justify-between gap-3 mb-4">
-              <div className="flex-1 min-w-0">
-                <p className="text-[10px] text-white/35 font-bold uppercase tracking-widest mb-1.5">
-                  Tax year {latestApp.tax_year}
-                </p>
-                <h2 className="text-lg font-black leading-snug">{statusInfo?.message}</h2>
-                <p className="text-white/45 text-xs mt-1 leading-relaxed">{statusInfo?.next}</p>
+      {/* Applications list */}
+      {applications && applications.length > 0 ? (
+        <div className="space-y-3">
+          <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest px-1">
+            {applications.length} application{applications.length !== 1 ? 's' : ''}
+          </p>
+          {applications.map(app => {
+            const status = app.status as ApplicationStatus
+            const canSubmit = SUBMITTABLE.includes(status)
+            const applicantName = (app as { applicant_name?: string | null }).applicant_name
+
+            return (
+              <div key={app.id} className="bg-white border border-black/[0.06] rounded-2xl shadow-sm overflow-hidden">
+                <div className="p-4">
+                  <div className="flex items-start justify-between gap-3 mb-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap mb-1">
+                        <span className="font-black text-brand-navy text-base">
+                          {applicantName || 'Tax year'} {app.tax_year}
+                        </span>
+                        <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full shrink-0 ${STATUS_COLOR[status]}`}>
+                          {STATUS_LABELS[status]}
+                        </span>
+                      </div>
+                      {applicantName && (
+                        <p className="text-xs text-gray-400">Tax year {app.tax_year}</p>
+                      )}
+                      <p className="text-xs text-gray-400 mt-0.5">
+                        Created {new Date(app.created_at).toLocaleDateString('en-GB')}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {/* Submit button */}
+                    {canSubmit && (
+                      <form action={submitApplication.bind(null, app.id)}>
+                        <button
+                          type="submit"
+                          className="flex items-center gap-1.5 bg-brand-red hover:bg-red-500 active:bg-red-600 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition-all active:scale-95 shadow-sm shadow-brand-red/20"
+                        >
+                          <Send size={11} />
+                          Submit to admin
+                        </button>
+                      </form>
+                    )}
+
+                    {/* Pay button */}
+                    {status === 'ready_for_payment' && (
+                      <Link
+                        href="/pay"
+                        className="flex items-center gap-1.5 bg-brand-navy hover:bg-opacity-90 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition-all active:scale-95"
+                      >
+                        <CreditCard size={11} />
+                        Pay now
+                      </Link>
+                    )}
+
+                    <Link
+                      href="/status"
+                      className="flex items-center gap-1.5 bg-gray-50 hover:bg-gray-100 border border-black/[0.06] text-brand-navy text-xs font-semibold px-4 py-2.5 rounded-xl transition-all active:scale-95"
+                    >
+                      View status <ChevronRight size={12} />
+                    </Link>
+
+                    <Link
+                      href="/documents"
+                      className="flex items-center gap-1.5 bg-gray-50 hover:bg-gray-100 border border-black/[0.06] text-brand-navy text-xs font-semibold px-4 py-2.5 rounded-xl transition-all active:scale-95"
+                    >
+                      <FileText size={11} />
+                      Documents
+                    </Link>
+                  </div>
+                </div>
               </div>
-              {status && (
-                <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full shrink-0 whitespace-nowrap ${STATUS_COLOR[status]}`}>
-                  {STATUS_LABELS[status]}
-                </span>
-              )}
-            </div>
-            <div className="flex items-center gap-2 flex-wrap">
-              {status === 'ready_for_payment' && (
-                <Link
-                  href="/pay"
-                  className="inline-flex items-center gap-1.5 bg-brand-red hover:bg-red-500 active:bg-red-600 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition-all active:scale-95 shadow-lg shadow-brand-red/30"
-                >
-                  <CreditCard size={12} />
-                  Pay now
-                </Link>
-              )}
-              <Link
-                href="/status"
-                className="inline-flex items-center gap-1.5 bg-white/8 hover:bg-white/12 active:bg-white/5 border border-white/10 text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition-all active:scale-95"
-              >
-                View timeline <ArrowRight size={13} />
-              </Link>
-            </div>
-          </div>
+            )
+          })}
         </div>
       ) : (
         <div className="bg-white border-2 border-dashed border-gray-200 rounded-2xl p-8 text-center shadow-sm">
           <div className="w-12 h-12 bg-brand-red/8 rounded-2xl flex items-center justify-center mx-auto mb-3">
             <FileText size={20} className="text-brand-red" />
           </div>
-          <h2 className="text-base font-black text-brand-navy mb-1">No application yet</h2>
-          <p className="text-gray-400 text-sm mb-4 max-w-[220px] mx-auto leading-relaxed">Start your German tax refund. Takes about 10 minutes.</p>
+          <h2 className="text-base font-black text-brand-navy mb-1">No applications yet</h2>
+          <p className="text-gray-400 text-sm mb-4 max-w-[220px] mx-auto leading-relaxed">
+            Start a German tax refund application. Takes about 10 minutes.
+          </p>
           <Link
             href="/application"
             className="inline-flex items-center gap-2 bg-brand-red text-white font-bold px-5 py-3 rounded-xl text-sm hover:bg-red-500 active:bg-red-600 active:scale-95 transition-all shadow-sm shadow-brand-red/20"
@@ -147,11 +186,11 @@ export default async function DashboardPage() {
         )}
       </div>
 
-      {/* Quick links grid */}
+      {/* Quick links */}
       <div className="grid grid-cols-2 gap-3">
         {[
           { href: '/documents', icon: FileText, label: 'Documents', sub: 'Upload files', iconBg: 'bg-brand-red/8', iconColor: 'text-brand-red' },
-          { href: '/status', icon: Clock, label: 'Status', sub: 'Track progress', iconBg: 'bg-indigo-50', iconColor: 'text-indigo-600' },
+          { href: '/status',    icon: Clock,    label: 'Status',    sub: 'Track progress', iconBg: 'bg-indigo-50', iconColor: 'text-indigo-600' },
         ].map(({ href, icon: Icon, label, sub, iconBg, iconColor }) => (
           <Link
             key={href}
@@ -166,40 +205,6 @@ export default async function DashboardPage() {
           </Link>
         ))}
       </div>
-
-      {/* Refund nudge */}
-      {latestApp && status !== 'completed' && (
-        <div className="bg-white border border-black/[0.06] rounded-2xl p-4 shadow-sm flex items-center gap-3">
-          <div className="w-9 h-9 bg-brand-success/10 rounded-xl flex items-center justify-center shrink-0">
-            <TrendingUp size={16} className="text-brand-success" strokeWidth={2} />
-          </div>
-          <div>
-            <p className="text-sm font-bold text-brand-navy">Average refund: <span className="text-brand-success">€800</span></p>
-            <p className="text-xs text-gray-400 mt-0.5">Most workers get €300–€2,000 back</p>
-          </div>
-        </div>
-      )}
-
-      {/* All applications */}
-      {applications && applications.length > 1 && (
-        <div className="bg-white border border-black/[0.06] rounded-2xl p-4 shadow-sm">
-          <h3 className="font-bold text-brand-navy text-sm mb-3">All applications</h3>
-          <div className="space-y-2">
-            {applications.map(app => (
-              <Link
-                key={app.id}
-                href="/status"
-                className="flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 active:bg-gray-200 rounded-xl transition-colors active:scale-[0.99]"
-              >
-                <span className="text-sm font-semibold text-brand-navy">Tax year {app.tax_year}</span>
-                <span className={`text-[10px] font-semibold px-2.5 py-1 rounded-full ${STATUS_COLOR[app.status as ApplicationStatus] ?? 'bg-gray-100 text-gray-500'}`}>
-                  {STATUS_LABELS[app.status as ApplicationStatus] ?? app.status}
-                </span>
-              </Link>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   )
 }

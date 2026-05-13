@@ -2,7 +2,7 @@
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
-import { ArrowRight, CheckCircle, FileText, Calendar } from 'lucide-react'
+import { ArrowRight, CheckCircle, FileText, Calendar, User } from 'lucide-react'
 
 const TAX_YEARS = [2024, 2023, 2022, 2021, 2020, 2019]
 
@@ -15,6 +15,7 @@ const REQUIREMENTS = [
 
 export default function ApplicationPage() {
   const [taxYear, setTaxYear] = useState<number | null>(null)
+  const [applicantName, setApplicantName] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const router = useRouter()
@@ -26,12 +27,13 @@ export default function ApplicationPage() {
     setError('')
     const { data: { user } } = await supabase.auth.getUser()
     const { error } = await supabase.from('applications').insert({
-      user_id: user!.id, tax_year: taxYear, status: 'draft',
+      user_id: user!.id,
+      tax_year: taxYear,
+      status: 'draft',
+      applicant_name: applicantName.trim() || null,
     })
     if (error) {
-      setError(error.code === '23505'
-        ? `You already have an application for ${taxYear}.`
-        : error.message)
+      setError(error.message)
       setLoading(false)
       return
     }
@@ -42,12 +44,31 @@ export default function ApplicationPage() {
     <div className="space-y-4">
       <div className="pt-1">
         <p className="text-[11px] font-bold text-brand-red uppercase tracking-widest mb-0.5">New application</p>
-        <h1 className="text-2xl sm:text-3xl font-black text-brand-navy tracking-tight">Pick a tax year</h1>
-        <p className="text-gray-400 text-sm mt-0.5">The year you worked in Germany</p>
+        <h1 className="text-2xl sm:text-3xl font-black text-brand-navy tracking-tight">New application</h1>
+        <p className="text-gray-400 text-sm mt-0.5">One account can handle multiple clients</p>
       </div>
 
       <div className="bg-white border border-black/[0.06] rounded-2xl shadow-sm overflow-hidden">
         <div className="px-5 pt-5 pb-0">
+
+          {/* Applicant name */}
+          <div className="mb-5">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-7 h-7 bg-brand-red/8 rounded-xl flex items-center justify-center">
+                <User size={13} className="text-brand-red" strokeWidth={2.2} />
+              </div>
+              <span className="font-bold text-brand-navy text-sm">Applicant name</span>
+            </div>
+            <input
+              className="w-full bg-gray-50 border border-black/[0.07] hover:border-black/[0.12] focus:border-brand-red/50 focus:bg-white rounded-xl px-4 py-3 text-sm text-brand-navy outline-none transition-all placeholder:text-gray-300"
+              value={applicantName}
+              onChange={e => setApplicantName(e.target.value)}
+              placeholder="Leave empty if applying for yourself"
+            />
+            <p className="text-xs text-gray-400 mt-1.5">For colleagues or clients — enter their full name</p>
+          </div>
+
+          {/* Tax year */}
           <div className="flex items-center gap-2 mb-4">
             <div className="w-7 h-7 bg-brand-red/8 rounded-xl flex items-center justify-center">
               <Calendar size={13} className="text-brand-red" strokeWidth={2.2} />
@@ -109,14 +130,14 @@ export default function ApplicationPage() {
             {loading
               ? 'Creating…'
               : taxYear
-                ? `Start ${taxYear} application`
+                ? `Start ${taxYear} application${applicantName.trim() ? ` for ${applicantName.trim()}` : ''}`
                 : 'Select a year first'}
             {!loading && taxYear && <ArrowRight size={15} strokeWidth={2.5} />}
           </button>
         </div>
       </div>
 
-      <p className="text-center text-xs text-gray-300 pb-1">One application per tax year · Free to start</p>
+      <p className="text-center text-xs text-gray-300 pb-1">Multiple applications allowed · Free to start</p>
     </div>
   )
 }

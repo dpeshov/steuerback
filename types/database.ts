@@ -153,6 +153,7 @@ export interface Database {
           id: string
           user_id: string
           tax_year: number
+          applicant_name: string | null
           country: string
           status: ApplicationStatus
           payment_status: PaymentStatus
@@ -168,6 +169,7 @@ export interface Database {
           id?: string
           user_id: string
           tax_year: number
+          applicant_name?: string | null
           country?: string
           status?: ApplicationStatus
           payment_status?: PaymentStatus
@@ -177,6 +179,7 @@ export interface Database {
         }
         Update: {
           tax_year?: number
+          applicant_name?: string | null
           country?: string
           status?: ApplicationStatus
           payment_status?: PaymentStatus
