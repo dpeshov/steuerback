@@ -18,16 +18,16 @@ export default async function AdminDashboard() {
     supabase.from('applications').select('*', { count: 'exact', head: true }).eq('status', 'completed'),
     supabase.from('applications').select('*', { count: 'exact', head: true }).eq('status', 'in_review'),
     supabase.from('applications')
-      .select('id, tax_year, status, created_at, users(email)')
+      .select('id, tax_year, status, created_at, applicant_name, users(email)')
       .order('created_at', { ascending: false })
       .limit(8),
   ])
 
   const stats = [
-    { label: 'Total applications', value: totalApps ?? 0, icon: FileText, color: 'text-brand-red' },
-    { label: 'Registered users', value: totalUsers ?? 0, icon: Users, color: 'text-blue-500' },
-    { label: 'Completed', value: completedApps ?? 0, icon: CheckCircle, color: 'text-brand-success' },
-    { label: 'In review', value: inReviewApps ?? 0, icon: Clock, color: 'text-yellow-500' },
+    { label: 'Total applications', value: totalApps ?? 0,    icon: FileText,    color: 'text-brand-red',     href: '/admin/applications' },
+    { label: 'Registered users',   value: totalUsers ?? 0,   icon: Users,       color: 'text-blue-500',      href: '/admin/users' },
+    { label: 'Completed',          value: completedApps ?? 0,icon: CheckCircle, color: 'text-brand-success', href: '/admin/applications?status=completed' },
+    { label: 'In review',          value: inReviewApps ?? 0, icon: Clock,       color: 'text-yellow-500',    href: '/admin/applications?status=in_review' },
   ]
 
   return (
@@ -38,12 +38,16 @@ export default async function AdminDashboard() {
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {stats.map(({ label, value, icon: Icon, color }) => (
-          <div key={label} className="bg-white rounded-2xl p-5 shadow-sm">
-            <Icon size={22} className={`${color} mb-3`} />
+        {stats.map(({ label, value, icon: Icon, color, href }) => (
+          <Link
+            key={label}
+            href={href}
+            className="bg-white rounded-2xl p-5 shadow-sm hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-150 group"
+          >
+            <Icon size={22} className={`${color} mb-3 group-hover:scale-110 transition-transform`} />
             <p className="text-3xl font-bold text-brand-navy">{value}</p>
             <p className="text-sm text-gray-500 mt-1">{label}</p>
-          </div>
+          </Link>
         ))}
       </div>
 
@@ -55,6 +59,7 @@ export default async function AdminDashboard() {
         <div className="divide-y divide-gray-50">
           {recentApps?.map(app => {
             const userRecord = app.users as { email: string } | null
+            const applicantName = (app as { applicant_name?: string | null }).applicant_name
             return (
               <Link
                 key={app.id}
@@ -62,10 +67,14 @@ export default async function AdminDashboard() {
                 className="flex items-center justify-between px-6 py-4 hover:bg-gray-50 transition-colors"
               >
                 <div>
-                  <p className="text-sm font-medium text-brand-navy">{userRecord?.email ?? '—'}</p>
-                  <p className="text-xs text-gray-400 mt-0.5">Tax year {app.tax_year}</p>
+                  <p className="text-sm font-medium text-brand-navy">
+                    {applicantName ?? userRecord?.email ?? '—'}
+                  </p>
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    {applicantName ? userRecord?.email + ' · ' : ''}Tax year {app.tax_year}
+                  </p>
                 </div>
-                <span className="text-xs font-semibold bg-brand-surface text-brand-navy px-3 py-1 rounded-full">
+                <span className="text-xs font-semibold bg-gray-100 text-brand-navy px-3 py-1 rounded-full">
                   {STATUS_LABELS[app.status as keyof typeof STATUS_LABELS] ?? app.status}
                 </span>
               </Link>
