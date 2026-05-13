@@ -4,8 +4,6 @@ import { createClient as createSupabase } from '@supabase/supabase-js'
 import { sendEmail, statusChangeEmail } from '@/lib/email'
 import type { Database } from '@/types/database'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
-
 function adminClient() {
   return createSupabase<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -15,6 +13,11 @@ function adminClient() {
 }
 
 export async function POST(req: NextRequest) {
+  if (!process.env.STRIPE_SECRET_KEY || !process.env.STRIPE_WEBHOOK_SECRET) {
+    return NextResponse.json({ error: 'Stripe not configured' }, { status: 503 })
+  }
+  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
+
   const body = await req.text()
   const sig = req.headers.get('stripe-signature')
 
@@ -22,7 +25,7 @@ export async function POST(req: NextRequest) {
 
   let event: Stripe.Event
   try {
-    event = stripe.webhooks.constructEvent(body, sig, process.env.STRIPE_WEBHOOK_SECRET!)
+    event = stripe.webhooks.constructEvent(body, sig, process.env.STRIPE_WEBHOOK_SECRET)
   } catch {
     return NextResponse.json({ error: 'Invalid signature' }, { status: 400 })
   }
