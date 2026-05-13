@@ -1,6 +1,8 @@
 'use server'
 import { createAdminClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/supabase/server'
 import { sendEmail, statusChangeEmail } from '@/lib/email'
+import { revalidatePath } from 'next/cache'
 import type { ApplicationStatus } from '@/types/database'
 
 export async function updateApplicationStatus(
@@ -9,10 +11,11 @@ export async function updateApplicationStatus(
   oldStatus: ApplicationStatus,
   note: string | null,
 ) {
-  const supabase = createAdminClient()
-
-  const { data: { user: admin } } = await supabase.auth.getUser()
+  const sessionClient = await createClient()
+  const { data: { user: admin } } = await sessionClient.auth.getUser()
   if (!admin) throw new Error('Unauthorized')
+
+  const supabase = createAdminClient()
 
   const { data: adminProfile } = await supabase
     .from('users').select('role').eq('id', admin.id).single()
@@ -27,7 +30,7 @@ export async function updateApplicationStatus(
     application_id: applicationId,
     old_status: oldStatus,
     new_status: newStatus,
-    changed_by: admin?.id ?? 'admin',
+    changed_by: admin.id,
     reason: note || null,
   })
 
@@ -43,4 +46,6 @@ export async function updateApplicationStatus(
       await sendEmail(statusChangeEmail(email, newStatus, app.tax_year))
     }
   }
+
+  revalidatePath(`/admin/applications/${applicationId}`)
 }

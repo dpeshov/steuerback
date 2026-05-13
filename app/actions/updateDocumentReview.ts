@@ -1,5 +1,6 @@
 'use server'
 import { createAdminClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/supabase/server'
 import { sendEmail, documentNeedsReuploadEmail } from '@/lib/email'
 import type { DocumentReviewStatus } from '@/types/database'
 
@@ -19,10 +20,11 @@ export async function updateDocumentReview(
   status: DocumentReviewStatus,
   note: string | null,
 ) {
-  const supabase = createAdminClient()
-
-  const { data: { user: admin } } = await supabase.auth.getUser()
+  const sessionClient = await createClient()
+  const { data: { user: admin } } = await sessionClient.auth.getUser()
   if (!admin) throw new Error('Unauthorized')
+
+  const supabase = createAdminClient()
 
   const { data: adminProfile } = await supabase
     .from('users').select('role').eq('id', admin.id).single()
@@ -31,7 +33,7 @@ export async function updateDocumentReview(
   await supabase.from('documents').update({
     review_status: status,
     admin_note: note || null,
-    reviewed_by: admin?.id ?? null,
+    reviewed_by: admin.id,
     reviewed_at: new Date().toISOString(),
   }).eq('id', documentId)
 
