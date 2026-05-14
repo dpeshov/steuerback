@@ -38,7 +38,7 @@ export default async function AdminApplicationsPage({
     .order('created_at', { ascending: false })
 
   if (statusFilter && ALL_STATUSES.includes(statusFilter as ApplicationStatus)) {
-    query = query.eq('status', statusFilter)
+    query = query.eq('status', statusFilter as ApplicationStatus)
   }
 
   const { data: applications } = await query

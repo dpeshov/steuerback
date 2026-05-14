@@ -27,7 +27,7 @@ export type DocumentType =
   | 'work_contract'
 export type DocumentReviewStatus = 'pending' | 'approved' | 'rejected' | 'needs_reupload'
 
-export interface Database {
+export type Database = {
   public: {
     Tables: {
       users: {
@@ -54,6 +54,7 @@ export interface Database {
           last_login_at?: string | null
           is_active?: boolean
         }
+        Relationships: []
       }
       profiles: {
         Row: {
@@ -147,6 +148,7 @@ export interface Database {
           profile_complete?: boolean
           updated_at?: string
         }
+        Relationships: []
       }
       applications: {
         Row: {
@@ -190,6 +192,15 @@ export interface Database {
           submitted_at?: string | null
           completed_at?: string | null
         }
+        Relationships: [
+          {
+            foreignKeyName: "applications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
       }
       documents: {
         Row: {
@@ -230,6 +241,15 @@ export interface Database {
           reviewed_by?: string | null
           reviewed_at?: string | null
         }
+        Relationships: [
+          {
+            foreignKeyName: "documents_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "applications"
+            referencedColumns: ["id"]
+          }
+        ]
       }
       payments: {
         Row: {
@@ -264,6 +284,7 @@ export interface Database {
           stripe_checkout_session_id?: string | null
           paid_at?: string | null
         }
+        Relationships: []
       }
       notes: {
         Row: {
@@ -285,6 +306,7 @@ export interface Database {
           text?: string
           is_public?: boolean
         }
+        Relationships: []
       }
       status_logs: {
         Row: {
@@ -310,6 +332,7 @@ export interface Database {
           changed_by?: string
           reason?: string | null
         }
+        Relationships: []
       }
       notifications: {
         Row: {
@@ -335,6 +358,7 @@ export interface Database {
           body?: string
           is_read?: boolean
         }
+        Relationships: []
       }
       activity_logs: {
         Row: {
@@ -363,7 +387,12 @@ export interface Database {
           metadata?: Json | null
           ip_address?: string | null
         }
+        Relationships: []
       }
     }
+    Views: Record<never, never>
+    Functions: Record<never, never>
+    Enums: Record<never, never>
+    CompositeTypes: Record<never, never>
   }
 }

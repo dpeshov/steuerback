@@ -12,8 +12,10 @@ export default async function UserLayout({ children }: { children: React.ReactNo
   return (
     <div className="min-h-screen bg-[#F4F5F7]">
       <UserNav user={user} />
-      <main className="max-w-2xl mx-auto px-4 pt-6 pb-28 md:pb-10" style={{ paddingBottom: 'calc(7rem + env(safe-area-inset-bottom, 0px))' }}>
-        {children}
+      <main className="md:pl-[220px] min-h-screen">
+        <div className="px-5 pt-6 pb-28 md:pb-8 max-w-5xl">
+          {children}
+        </div>
       </main>
       <MobileNav />
     </div>

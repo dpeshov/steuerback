@@ -1,13 +1,13 @@
 'use client'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, FileText, Clock, User } from 'lucide-react'
+import { LayoutDashboard, FileText, MessageSquare, Settings } from 'lucide-react'
 
 const NAV = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Home' },
-  { href: '/documents', icon: FileText, label: 'Docs' },
-  { href: '/status', icon: Clock, label: 'Status' },
-  { href: '/profile', icon: User, label: 'Profile' },
+  { href: '/documents', icon: FileText,         label: 'Docs' },
+  { href: '/messages',  icon: MessageSquare,    label: 'Messages' },
+  { href: '/profile',   icon: Settings,         label: 'Settings' },
 ]
 
 export default function MobileNav() {

@@ -1,20 +1,22 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useTransition, useRef } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
+import { createClient } from '@/lib/supabase/client'
 import {
-  User, Briefcase, FileText, Clock, MessageSquare, CreditCard,
-  Send, FileCheck, Banknote, AlertCircle, Lock,
-  Phone, Mail, Building, Calendar, MapPin, Hash, Globe,
+  ArrowLeft, User, FileText, Clock, MessageSquare, CreditCard,
+  Send, FileCheck, Banknote, AlertCircle, Download,
+  Phone, Mail, MapPin, Calendar, Briefcase,
+  CheckCircle, XCircle,
 } from 'lucide-react'
 import { STATUS_LABELS, formatDate } from '@/lib/utils'
 import { updateApplicationStatus } from '@/app/actions/updateApplicationStatus'
+import { updateDocumentReview } from '@/app/actions/updateDocumentReview'
 import { addNote } from '@/app/actions/addNote'
-import StatusChanger from './StatusChanger'
-import DocumentReviewer from './DocumentReviewer'
 import type { ApplicationStatus, DocumentReviewStatus } from '@/types/database'
 
-// ── Types ──────────────────────────────────────────────────────
+// ── Types ──────────────────────────────────────────────────────────────────
 type AppData = {
   id: string
   tax_year: number
@@ -78,14 +80,11 @@ type NoteData = {
   created_at: string
 }
 
-// ── Constants ──────────────────────────────────────────────────
-const TABS = [
-  { id: 'overview',  label: 'Overview',  icon: User },
-  { id: 'profile',   label: 'Profile',   icon: Briefcase },
-  { id: 'documents', label: 'Documents', icon: FileText },
-  { id: 'timeline',  label: 'Timeline',  icon: Clock },
-  { id: 'notes',     label: 'Notes',     icon: MessageSquare },
-  { id: 'payments',  label: 'Payments',  icon: CreditCard },
+// ── Constants ───────────────────────────────────────────────────────────────
+const ALL_STATUSES: ApplicationStatus[] = [
+  'draft', 'profile_incomplete', 'documents_pending', 'ready_for_payment',
+  'paid', 'in_review', 'missing_documents', 'ready_for_submission',
+  'submitted', 'completed', 'rejected',
 ]
 
 const STATUS_COLORS: Record<ApplicationStatus, string> = {
@@ -112,14 +111,35 @@ const NATIONALITY_FLAGS: Record<string, string> = {
   Dutch: '🇳🇱', Austrian: '🇦🇹', Other: '🌍',
 }
 
-// ── Main Component ─────────────────────────────────────────────
+const DOC_TYPE_LABELS: Record<string, string> = {
+  passport:          'Passport',
+  lohnsteuer:        'Lohnsteuerbescheinigung',
+  payslip:           'Payslip',
+  student_proof:     'Student Proof',
+  home_tax_statement:'Home Tax Statement',
+  power_of_attorney: 'Power of Attorney',
+  bank_proof:        'Bank Details',
+  work_contract:     'Work Contract',
+}
+
+const DOC_STATUS_STYLE: Record<string, { label: string; className: string }> = {
+  pending:        { label: 'Uploaded',       className: 'bg-blue-50 text-blue-600' },
+  approved:       { label: 'Approved',       className: 'bg-green-50 text-green-700' },
+  rejected:       { label: 'Rejected',       className: 'bg-red-50 text-red-600' },
+  needs_reupload: { label: 'Needs Reupload', className: 'bg-orange-50 text-orange-600' },
+}
+
+function fmtDate(iso: string) {
+  return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
+}
+
+function fmtDateTime(iso: string) {
+  return `${fmtDate(iso)} at ${new Date(iso).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`
+}
+
+// ── Main Component ──────────────────────────────────────────────────────────
 export default function ApplicationTabs({
-  app,
-  profile,
-  documents,
-  logs,
-  notes,
-  userEmail,
+  app, profile, documents, logs, notes, userEmail,
 }: {
   app: AppData
   profile: ProfileData
@@ -129,54 +149,96 @@ export default function ApplicationTabs({
   userEmail: string
 }) {
   const [activeTab, setActiveTab] = useState('overview')
+  const [headerStatus, setHeaderStatus] = useState<ApplicationStatus>(app.status)
   const [isPending, startTransition] = useTransition()
   const router = useRouter()
 
-  const quickActions = [
-    {
-      label: 'Request Docs',
-      status: 'missing_documents' as ApplicationStatus,
-      color: 'bg-red-50 text-red-700 hover:bg-red-100 border-red-200',
-      icon: AlertCircle,
-    },
-    {
-      label: 'Verify Docs',
-      status: 'ready_for_submission' as ApplicationStatus,
-      color: 'bg-teal-50 text-teal-700 hover:bg-teal-100 border-teal-200',
-      icon: FileCheck,
-    },
-    {
-      label: 'Submit to Finanzamt',
-      status: 'submitted' as ApplicationStatus,
-      color: 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border-indigo-200',
-      icon: Send,
-    },
-    {
-      label: 'Mark Refund Paid',
-      status: 'completed' as ApplicationStatus,
-      color: 'bg-green-50 text-green-700 hover:bg-green-100 border-green-200',
-      icon: Banknote,
-    },
-  ]
+  const publicNotes  = notes.filter(n => n.is_public)
+  const internalNotes = notes.filter(n => !n.is_public)
 
-  const handleQuickAction = (newStatus: ApplicationStatus, label: string) => {
-    if (!confirm(`Set status to "${STATUS_LABELS[newStatus]}"?`)) return
+  const appId = `TR-${app.tax_year}-${app.id.slice(0, 5).toUpperCase()}`
+  const displayName = app.applicant_name
+    || [profile?.first_name, profile?.last_name].filter(Boolean).join(' ')
+    || userEmail
+    || '—'
+
+  const handleSaveStatus = () => {
+    if (headerStatus === app.status) return
     startTransition(async () => {
-      await updateApplicationStatus(app.id, newStatus, app.status, `Quick action: ${label}`)
+      await updateApplicationStatus(app.id, headerStatus, app.status, null)
       router.refresh()
     })
   }
 
+  const TABS = [
+    { id: 'overview',  label: 'Overview',  icon: User },
+    { id: 'profile',   label: 'Profile',   icon: User },
+    { id: 'documents', label: 'Documents', icon: FileText,      badge: documents.length },
+    { id: 'timeline',  label: 'Timeline',  icon: Clock },
+    { id: 'messages',  label: 'Messages',  icon: MessageSquare, badge: publicNotes.length },
+    { id: 'payments',  label: 'Payments',  icon: CreditCard },
+  ]
+
+  const quickActions = [
+    { label: 'Request Document',    status: 'missing_documents'    as ApplicationStatus, icon: AlertCircle },
+    { label: 'Mark Docs Verified',  status: 'ready_for_submission' as ApplicationStatus, icon: FileCheck },
+    { label: 'Submit to Finanzamt', status: 'submitted'            as ApplicationStatus, icon: Send },
+    { label: 'Mark Refund Paid',    status: 'completed'            as ApplicationStatus, icon: Banknote },
+  ]
+
   return (
-    <div className="space-y-3">
-      {/* Quick action buttons */}
+    <div className="space-y-5">
+      {/* ── Page header ── */}
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <div className="flex items-center gap-2.5 mb-1">
+            <Link href="/admin/applications" className="text-gray-400 hover:text-brand-navy transition-colors">
+              <ArrowLeft size={16} />
+            </Link>
+            <h1 className="text-2xl font-black text-brand-navy">{appId}</h1>
+            <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${STATUS_COLORS[app.status]}`}>
+              {STATUS_LABELS[app.status]}
+            </span>
+          </div>
+          <p className="text-sm text-gray-400 ml-6">
+            {displayName} &bull; Created {fmtDate(app.created_at)}
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2.5 shrink-0">
+          <select
+            value={headerStatus}
+            onChange={e => setHeaderStatus(e.target.value as ApplicationStatus)}
+            className="border border-gray-200 bg-white rounded-xl px-3 py-2 text-sm text-brand-navy font-medium focus:outline-none focus:ring-2 focus:ring-brand-red/20"
+          >
+            {ALL_STATUSES.map(s => (
+              <option key={s} value={s}>{STATUS_LABELS[s]}</option>
+            ))}
+          </select>
+          <button
+            onClick={handleSaveStatus}
+            disabled={isPending || headerStatus === app.status}
+            className="bg-brand-red hover:bg-red-500 active:bg-red-600 disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold text-sm px-4 py-2 rounded-xl transition-all"
+          >
+            {isPending ? 'Saving…' : 'Save Changes'}
+          </button>
+        </div>
+      </div>
+
+      {/* ── Quick actions ── */}
       <div className="flex gap-2 flex-wrap">
-        {quickActions.map(({ label, status, color, icon: Icon }) => (
+        {quickActions.map(({ label, status, icon: Icon }) => (
           <button
             key={status}
-            onClick={() => handleQuickAction(status, label)}
+            onClick={() => {
+              if (!confirm(`Set status to "${STATUS_LABELS[status]}"?`)) return
+              startTransition(async () => {
+                await updateApplicationStatus(app.id, status, app.status, `Quick action: ${label}`)
+                router.refresh()
+              })
+            }}
             disabled={isPending || app.status === status}
-            className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold border transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed ${color}`}
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <Icon size={12} strokeWidth={2.5} />
             {label}
@@ -184,41 +246,36 @@ export default function ApplicationTabs({
         ))}
       </div>
 
-      {/* Tabs panel */}
+      {/* ── Tabs panel ── */}
       <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-        {/* Tab nav */}
-        <div className="flex border-b border-gray-100 overflow-x-auto scrollbar-hide">
-          {TABS.map(({ id, label, icon: Icon }) => {
-            const badge = id === 'documents' ? documents.length : id === 'notes' ? notes.length : 0
-            return (
-              <button
-                key={id}
-                onClick={() => setActiveTab(id)}
-                className={`flex items-center gap-1.5 px-4 py-4 text-xs font-semibold whitespace-nowrap border-b-2 transition-colors ${
-                  activeTab === id
-                    ? 'border-brand-red text-brand-red bg-red-50/40'
-                    : 'border-transparent text-gray-400 hover:text-gray-600 hover:bg-gray-50'
-                }`}
-              >
-                <Icon size={13} />
-                {label}
-                {badge > 0 && (
-                  <span className="ml-0.5 bg-gray-100 text-gray-500 text-[10px] font-bold px-1.5 py-0.5 rounded-full">
-                    {badge}
-                  </span>
-                )}
-              </button>
-            )
-          })}
+        <div className="flex border-b border-gray-100 overflow-x-auto">
+          {TABS.map(({ id, label, icon: Icon, badge }) => (
+            <button
+              key={id}
+              onClick={() => setActiveTab(id)}
+              className={`flex items-center gap-1.5 px-5 py-3.5 text-sm font-semibold whitespace-nowrap border-b-2 transition-colors ${
+                activeTab === id
+                  ? 'border-brand-red text-brand-red'
+                  : 'border-transparent text-gray-400 hover:text-gray-600 hover:bg-gray-50'
+              }`}
+            >
+              <Icon size={14} />
+              {label}
+              {badge != null && badge > 0 && (
+                <span className="ml-0.5 bg-gray-100 text-gray-500 text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                  {badge}
+                </span>
+              )}
+            </button>
+          ))}
         </div>
 
-        {/* Tab content */}
-        <div className="p-5 sm:p-6">
-          {activeTab === 'overview'  && <OverviewTab  app={app} profile={profile} userEmail={userEmail} />}
+        <div className="p-6">
+          {activeTab === 'overview'  && <OverviewTab  app={app} profile={profile} userEmail={userEmail} documents={documents} internalNotes={internalNotes} />}
           {activeTab === 'profile'   && <ProfileTab   profile={profile} userEmail={userEmail} />}
           {activeTab === 'documents' && <DocumentsTab documents={documents} />}
           {activeTab === 'timeline'  && <TimelineTab  logs={logs} />}
-          {activeTab === 'notes'     && <NotesTab     applicationId={app.id} notes={notes} />}
+          {activeTab === 'messages'  && <MessagesTab  applicationId={app.id} notes={publicNotes} appUserId={app.user_id} />}
           {activeTab === 'payments'  && <PaymentsTab  app={app} />}
         </div>
       </div>
@@ -226,163 +283,268 @@ export default function ApplicationTabs({
   )
 }
 
-// ── Overview Tab ───────────────────────────────────────────────
-function OverviewTab({ app, profile, userEmail }: { app: AppData; profile: ProfileData; userEmail: string }) {
-  const fullName = [profile?.first_name, profile?.last_name].filter(Boolean).join(' ')
-    || app.applicant_name || '—'
+// ── Overview Tab ────────────────────────────────────────────────────────────
+function OverviewTab({ app, profile, userEmail, documents, internalNotes }: {
+  app: AppData
+  profile: ProfileData
+  userEmail: string
+  documents: DocData[]
+  internalNotes: NoteData[]
+}) {
+  const [noteText, setNoteText] = useState('')
+  const [sending, setSending] = useState(false)
+  const router = useRouter()
+
+  const fullName = [profile?.first_name, profile?.last_name].filter(Boolean).join(' ') || app.applicant_name || '—'
   const initials = fullName !== '—'
     ? fullName.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()
     : '?'
   const flag = NATIONALITY_FLAGS[profile?.nationality ?? ''] ?? ''
+  const hasPayslip = documents.some(d => d.document_type === 'payslip')
 
-  const employmentRows = [
-    { icon: Building, label: 'Employer',     value: profile?.employer_name },
-    { icon: Calendar, label: 'Period',       value: profile?.work_start ? `${profile.work_start} → ${profile.work_end ?? 'present'}` : null },
-    { icon: Hash,     label: 'Gross income', value: profile?.gross_income_eur ? `€${Number(profile.gross_income_eur).toLocaleString()}` : null },
-    { icon: Globe,    label: 'Tax ID',       value: profile?.tax_id },
-  ].filter(r => r.value)
+  const sendNote = async () => {
+    if (!noteText.trim()) return
+    setSending(true)
+    await addNote(app.id, noteText.trim(), false)
+    setNoteText('')
+    setSending(false)
+    router.refresh()
+  }
 
   return (
     <div className="space-y-5">
-      <div className="grid sm:grid-cols-2 gap-4">
-        {/* Applicant card */}
-        <div className="bg-gray-50 rounded-xl p-4">
+      {/* 3 cards row */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {/* Applicant */}
+        <div className="border border-gray-100 rounded-xl p-5">
+          <h3 className="font-bold text-brand-navy mb-4">Applicant</h3>
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-11 h-11 rounded-full bg-brand-navy flex items-center justify-center shrink-0">
-              <span className="text-white font-bold text-sm">{initials}</span>
+            <div className="w-10 h-10 rounded-full bg-brand-red/10 flex items-center justify-center shrink-0">
+              <span className="text-brand-red font-black text-sm">{initials}</span>
             </div>
             <div>
-              <p className="font-bold text-brand-navy leading-tight">
-                {fullName} {flag}
-              </p>
-              <p className="text-xs text-gray-400">{profile?.nationality ?? 'Unknown nationality'}</p>
+              <p className="font-bold text-brand-navy text-sm leading-tight">{fullName}</p>
+              {profile?.nationality && (
+                <p className="text-xs text-gray-400">{flag} {profile.nationality}</p>
+              )}
             </div>
           </div>
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 text-sm text-gray-600">
-              <Mail size={12} className="text-gray-400 shrink-0" />
-              <span className="truncate text-xs">{userEmail}</span>
+          <div className="border-t border-gray-50 pt-3 space-y-2">
+            <div className="flex items-center gap-2 text-xs text-gray-500">
+              <Mail size={11} className="text-gray-400 shrink-0" />
+              <span className="truncate">{userEmail}</span>
             </div>
             {profile?.phone && (
-              <div className="flex items-center gap-2 text-sm text-gray-600">
-                <Phone size={12} className="text-gray-400 shrink-0" />
-                <span className="text-xs">{profile.phone}</span>
+              <div className="flex items-center gap-2 text-xs text-gray-500">
+                <Phone size={11} className="text-gray-400 shrink-0" />
+                <span>{profile.phone}</span>
               </div>
             )}
-            {profile?.country_of_residence && (
-              <div className="flex items-center gap-2 text-sm text-gray-600">
-                <MapPin size={12} className="text-gray-400 shrink-0" />
-                <span className="text-xs">
-                  {profile.country_of_residence}{profile.city ? `, ${profile.city}` : ''}
-                </span>
+            {(profile?.city || profile?.country_of_residence) && (
+              <div className="flex items-center gap-2 text-xs text-gray-500">
+                <MapPin size={11} className="text-gray-400 shrink-0" />
+                <span>{[profile?.city, profile?.country_of_residence].filter(Boolean).join(', ')}</span>
               </div>
             )}
           </div>
         </div>
 
-        {/* Employment summary */}
-        <div className="bg-gray-50 rounded-xl p-4">
-          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Employment</p>
-          {employmentRows.length > 0 ? (
-            <div className="space-y-2.5">
-              {employmentRows.map(({ icon: Icon, label, value }) => (
-                <div key={label} className="flex items-center gap-2">
-                  <Icon size={12} className="text-gray-400 shrink-0" />
-                  <span className="text-xs text-gray-400 w-20 shrink-0">{label}</span>
-                  <span className="text-xs text-brand-navy font-medium truncate">{value}</span>
-                </div>
-              ))}
+        {/* Work in Germany */}
+        <div className="border border-gray-100 rounded-xl p-5">
+          <h3 className="font-bold text-brand-navy mb-4">Work in Germany</h3>
+          <div className="space-y-2.5 mb-4">
+            {profile?.employer_name && (
+              <div className="flex items-center gap-2 text-sm text-gray-600">
+                <Briefcase size={13} className="text-gray-400 shrink-0" />
+                <span>{profile.employer_name}</span>
+              </div>
+            )}
+            {profile?.work_start && (
+              <div className="flex items-center gap-2 text-sm text-gray-600">
+                <Calendar size={13} className="text-gray-400 shrink-0" />
+                <span>{profile.work_start}{profile.work_end ? ` - ${profile.work_end}` : ' - present'}</span>
+              </div>
+            )}
+            {profile?.gross_income_eur && (
+              <div className="flex items-center gap-2 text-sm text-gray-600">
+                <span className="text-gray-400 font-bold text-xs shrink-0">€</span>
+                <span>~€{Number(profile.gross_income_eur).toLocaleString()} earnings</span>
+              </div>
+            )}
+            {!profile?.employer_name && !profile?.work_start && (
+              <p className="text-xs text-gray-400">No employment data yet</p>
+            )}
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            <span className="px-2.5 py-1 bg-gray-100 text-gray-600 text-xs rounded-full font-medium">
+              Tax Year: {app.tax_year}
+            </span>
+            {profile?.tax_id && (
+              <span className="px-2.5 py-1 bg-gray-100 text-gray-600 text-xs rounded-full font-medium">
+                Has Tax ID
+              </span>
+            )}
+            {hasPayslip && (
+              <span className="px-2.5 py-1 bg-gray-100 text-gray-600 text-xs rounded-full font-medium">
+                Has Payslips
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Payment */}
+        <div className="border border-gray-100 rounded-xl p-5">
+          <h3 className="font-bold text-brand-navy mb-4">Payment</h3>
+          <div className="space-y-3">
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-400">Service Fee</span>
+              <span className="font-semibold text-brand-navy">€70</span>
             </div>
-          ) : (
-            <p className="text-xs text-gray-400">No employment data filled yet</p>
-          )}
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-400">Type</span>
+              <span className="font-semibold text-brand-navy">Pay Upfront</span>
+            </div>
+            <div className="flex justify-between text-sm items-center">
+              <span className="text-gray-400">Status</span>
+              <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${
+                app.payment_status === 'paid'    ? 'bg-green-100 text-green-700' :
+                app.payment_status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
+                                                   'bg-gray-100 text-gray-500'
+              }`}>
+                {app.payment_status ?? 'unpaid'}
+              </span>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Status changer */}
-      <StatusChanger applicationId={app.id} currentStatus={app.status} />
-    </div>
-  )
-}
+      {/* Internal Notes */}
+      <div className="border border-gray-100 rounded-xl p-5">
+        <h3 className="font-bold text-brand-navy mb-4 flex items-center gap-2">
+          <FileText size={14} className="text-gray-400" />
+          Internal Notes
+        </h3>
 
-// ── Profile Tab ────────────────────────────────────────────────
-function ProfileTab({ profile, userEmail }: { profile: ProfileData; userEmail: string }) {
-  if (!profile) {
-    return (
-      <div className="text-center py-12 text-gray-400 text-sm">
-        No profile data yet
-      </div>
-    )
-  }
-
-  const sections = [
-    {
-      title: 'Personal',
-      rows: [
-        ['First name', profile.first_name],
-        ['Last name', profile.last_name],
-        ['Date of birth', profile.date_of_birth],
-        ['Nationality', profile.nationality],
-        ['Passport / ID', profile.passport_number],
-        ['Phone', profile.phone],
-        ['Email', userEmail],
-        ['Address', profile.address],
-        ['City', profile.city],
-        ['Country', profile.country_of_residence],
-      ],
-    },
-    {
-      title: 'Employment',
-      rows: [
-        ['Employer', profile.employer_name],
-        ['Work start', profile.work_start],
-        ['Work end', profile.work_end ?? (profile.work_start ? 'Still employed' : null)],
-        ['Gross income', profile.gross_income_eur ? `€${Number(profile.gross_income_eur).toLocaleString()}` : null],
-        ['Student', profile.student_status === true ? 'Yes' : profile.student_status === false ? 'No' : null],
-        ['University', profile.university],
-      ],
-    },
-    {
-      title: 'Banking',
-      rows: [
-        ['IBAN', profile.iban],
-        ['Bank name', profile.bank_name],
-        ['SWIFT / BIC', profile.swift_bic],
-        ['Account holder', profile.bank_account_holder],
-        ['Bank country', profile.bank_country],
-      ],
-    },
-    {
-      title: 'Tax',
-      rows: [
-        ['Tax ID', profile.tax_id],
-      ],
-    },
-  ]
-
-  return (
-    <div className="space-y-7">
-      {sections.map(({ title, rows }) => (
-        <div key={title}>
-          <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">{title}</h3>
-          <div className="divide-y divide-gray-50">
-            {rows.map(([label, value]) => (
-              <div key={label as string} className="flex justify-between items-center py-2.5 text-sm gap-4">
-                <span className="text-gray-400 shrink-0">{label as string}</span>
-                <span className={`font-medium text-right ${value ? 'text-brand-navy' : 'text-gray-300'}`}>
-                  {(value as string) ?? '—'}
-                </span>
+        {internalNotes.length > 0 && (
+          <div className="space-y-2.5 mb-4 max-h-48 overflow-y-auto">
+            {internalNotes.map(note => (
+              <div key={note.id} className="bg-gray-50 rounded-lg p-3">
+                <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{note.text}</p>
+                <p className="text-[11px] text-gray-400 mt-1.5">{formatDate(note.created_at)}</p>
               </div>
             ))}
           </div>
+        )}
+
+        <div className="flex gap-3">
+          <textarea
+            value={noteText}
+            onChange={e => setNoteText(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) sendNote() }}
+            placeholder="Add an internal note..."
+            rows={3}
+            className="flex-1 bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-brand-red/20 focus:border-brand-red/30 transition-all"
+          />
+          <button
+            onClick={sendNote}
+            disabled={sending || !noteText.trim()}
+            className="self-end flex items-center gap-1.5 bg-brand-navy hover:bg-opacity-90 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-all"
+          >
+            {sending ? 'Saving…' : 'Add Note'}
+          </button>
         </div>
-      ))}
+      </div>
     </div>
   )
 }
 
-// ── Documents Tab ──────────────────────────────────────────────
+// ── Profile Tab ─────────────────────────────────────────────────────────────
+function ProfileTab({ profile, userEmail }: { profile: ProfileData; userEmail: string }) {
+  if (!profile) {
+    return <div className="text-center py-12 text-gray-400 text-sm">No profile data yet</div>
+  }
+
+  const flag = NATIONALITY_FLAGS[profile.nationality ?? ''] ?? ''
+
+  const Field = ({ label, value }: { label: string; value?: string | null }) => (
+    <div>
+      <p className="text-xs text-gray-400 mb-0.5">{label}</p>
+      <p className={`text-sm font-semibold ${value ? 'text-brand-navy' : 'text-gray-300'}`}>{value ?? '—'}</p>
+    </div>
+  )
+
+  return (
+    <div className="space-y-4">
+      {/* Personal + Contact */}
+      <div className="grid md:grid-cols-2 gap-4">
+        <div className="border border-gray-100 rounded-xl p-5">
+          <h3 className="font-bold text-brand-navy mb-4">Personal Information</h3>
+          <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+            <Field label="First Name"           value={profile.first_name} />
+            <Field label="Last Name"            value={profile.last_name} />
+            <Field label="Date of Birth"        value={profile.date_of_birth} />
+            <Field label="Nationality"          value={profile.nationality ? `${flag} ${profile.nationality}` : null} />
+            <Field label="Passport Number"      value={profile.passport_number} />
+            <Field label="Country of Residence" value={profile.country_of_residence} />
+          </div>
+        </div>
+
+        <div className="border border-gray-100 rounded-xl p-5">
+          <h3 className="font-bold text-brand-navy mb-4">Contact Information</h3>
+          <div className="space-y-4">
+            <Field label="Email"   value={userEmail} />
+            <Field label="Phone"   value={profile.phone} />
+            <Field label="Address" value={[profile.address, profile.city, profile.country_of_residence].filter(Boolean).join(', ') || null} />
+          </div>
+        </div>
+      </div>
+
+      {/* Bank Details */}
+      <div className="border border-gray-100 rounded-xl p-5">
+        <h3 className="font-bold text-brand-navy mb-4">Bank Details</h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <Field label="IBAN"            value={profile.iban} />
+          <Field label="Bank Name"       value={profile.bank_name} />
+          <Field label="Account Holder"  value={profile.bank_account_holder} />
+        </div>
+      </div>
+
+      {/* Employment */}
+      {(profile.employer_name || profile.work_start || profile.gross_income_eur) && (
+        <div className="border border-gray-100 rounded-xl p-5">
+          <h3 className="font-bold text-brand-navy mb-4">Employment</h3>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+            <Field label="Employer"     value={profile.employer_name} />
+            <Field label="Work Period"  value={profile.work_start ? `${profile.work_start} → ${profile.work_end ?? 'present'}` : null} />
+            <Field label="Gross Income" value={profile.gross_income_eur ? `€${Number(profile.gross_income_eur).toLocaleString()}` : null} />
+            {profile.tax_id && <Field label="Tax ID" value={profile.tax_id} />}
+            {profile.student_status != null && <Field label="Student" value={profile.student_status ? 'Yes' : 'No'} />}
+            {profile.university && <Field label="University" value={profile.university} />}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ── Documents Tab ───────────────────────────────────────────────────────────
 function DocumentsTab({ documents }: { documents: DocData[] }) {
+  const [loadingId, setLoadingId] = useState<string | null>(null)
+  const router = useRouter()
+  const supabase = createClient()
+
+  const handleReview = async (docId: string, status: DocumentReviewStatus) => {
+    setLoadingId(docId)
+    await updateDocumentReview(docId, status, null)
+    setLoadingId(null)
+    router.refresh()
+  }
+
+  const openFile = async (filePath: string) => {
+    const { data } = await supabase.storage.from('documents').createSignedUrl(filePath, 300)
+    if (data?.signedUrl) window.open(data.signedUrl, '_blank')
+  }
+
   if (!documents.length) {
     return (
       <div className="text-center py-12">
@@ -391,17 +553,89 @@ function DocumentsTab({ documents }: { documents: DocData[] }) {
       </div>
     )
   }
+
   return (
-    <div className="space-y-3">
-      <p className="text-xs text-gray-400">{documents.length} document{documents.length !== 1 ? 's' : ''}</p>
-      {documents.map(doc => (
-        <DocumentReviewer key={doc.id} doc={doc} />
-      ))}
+    <div>
+      <div className="mb-5">
+        <h3 className="font-bold text-brand-navy text-base">Uploaded Documents</h3>
+        <p className="text-sm text-gray-400">Review and approve documents submitted by the applicant</p>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-gray-100">
+              {['Document', 'Type', 'Status', 'Uploaded', 'Admin Notes', 'Actions'].map(h => (
+                <th key={h} className="text-left text-xs font-semibold text-gray-400 pb-3 pr-4 last:pr-0">{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {documents.map(doc => {
+              const style = DOC_STATUS_STYLE[doc.review_status] ?? DOC_STATUS_STYLE.pending
+              const isLoading = loadingId === doc.id
+              return (
+                <tr key={doc.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
+                  <td className="py-3.5 pr-4 text-brand-navy font-medium max-w-[160px] truncate">
+                    {doc.file_name}
+                  </td>
+                  <td className="py-3.5 pr-4">
+                    <span className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded-md font-medium whitespace-nowrap">
+                      {DOC_TYPE_LABELS[doc.document_type] ?? doc.document_type}
+                    </span>
+                  </td>
+                  <td className="py-3.5 pr-4">
+                    <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${style.className}`}>
+                      {style.label}
+                    </span>
+                  </td>
+                  <td className="py-3.5 pr-4 text-gray-400 text-xs whitespace-nowrap">
+                    {fmtDate(doc.created_at)}
+                  </td>
+                  <td className="py-3.5 pr-4 text-gray-400 text-xs max-w-[180px] truncate">
+                    {doc.admin_note ?? '—'}
+                  </td>
+                  <td className="py-3.5">
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => openFile(doc.file_path)}
+                        title="Download"
+                        className="p-1.5 text-gray-400 hover:text-brand-navy hover:bg-gray-100 rounded-lg transition-colors"
+                      >
+                        <Download size={13} />
+                      </button>
+                      {doc.review_status === 'pending' && (
+                        <>
+                          <button
+                            onClick={() => handleReview(doc.id, 'approved')}
+                            disabled={isLoading}
+                            title="Approve"
+                            className="p-1.5 text-green-500 hover:text-green-700 hover:bg-green-50 rounded-lg transition-colors disabled:opacity-40"
+                          >
+                            <CheckCircle size={13} />
+                          </button>
+                          <button
+                            onClick={() => handleReview(doc.id, 'needs_reupload')}
+                            disabled={isLoading}
+                            title="Request reupload"
+                            className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-40"
+                          >
+                            <XCircle size={13} />
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      </div>
     </div>
   )
 }
 
-// ── Timeline Tab ───────────────────────────────────────────────
+// ── Timeline Tab ────────────────────────────────────────────────────────────
 function TimelineTab({ logs }: { logs: LogData[] }) {
   if (!logs.length) {
     return (
@@ -412,159 +646,153 @@ function TimelineTab({ logs }: { logs: LogData[] }) {
     )
   }
 
+  const STATUS_DESCRIPTIONS: Partial<Record<string, string>> = {
+    draft:                 'Application created',
+    profile_incomplete:    'Profile needs completion',
+    documents_pending:     'Awaiting documents',
+    ready_for_payment:     'Payment required',
+    paid:                  'Payment confirmed',
+    in_review:             'Under admin review',
+    missing_documents:     'Additional documents requested',
+    ready_for_submission:  'Documents received',
+    submitted:             'Submitted to Finanzamt',
+    completed:             'Refund processed',
+    rejected:              'Application rejected',
+  }
+
   return (
-    <div className="relative pl-7">
-      <div className="absolute left-3 top-3 bottom-3 w-px bg-gray-100" />
-      <div className="space-y-4">
-        {logs.map((log, i) => (
-          <div key={log.id} className="relative">
-            <div className={`absolute -left-7 top-2 w-4 h-4 rounded-full border-2 border-white shadow ${
-              i === 0 ? 'bg-brand-red' : 'bg-gray-300'
-            }`} />
-            <div className="bg-gray-50 rounded-xl p-3.5">
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
+    <div>
+      <h3 className="font-bold text-brand-navy mb-1">Application Timeline</h3>
+      <p className="text-sm text-gray-400 mb-6">Track the progress of this application</p>
+
+      <div className="relative pl-8">
+        <div className="absolute left-3 top-3 bottom-3 w-px bg-gray-100" />
+        <div className="space-y-5">
+          {logs.map((log, i) => (
+            <div key={log.id} className="relative flex items-start justify-between gap-4">
+              <div className={`absolute -left-8 top-0.5 w-6 h-6 rounded-full border-2 border-white shadow-sm flex items-center justify-center ${
+                i === 0 ? 'bg-brand-red' : 'bg-white border-gray-200'
+              }`}>
+                <div className={`w-2 h-2 rounded-full ${i === 0 ? 'bg-white' : 'bg-gray-300'}`} />
+              </div>
+
+              <div className="flex-1 min-w-0">
+                <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-bold mb-1 ${
                   STATUS_COLORS[log.new_status as ApplicationStatus] ?? 'bg-gray-100 text-gray-600'
                 }`}>
                   {STATUS_LABELS[log.new_status as ApplicationStatus] ?? log.new_status}
                 </span>
-                {log.old_status && (
-                  <>
-                    <span className="text-gray-300 text-xs">←</span>
-                    <span className="text-xs text-gray-400">
-                      {STATUS_LABELS[log.old_status as ApplicationStatus] ?? log.old_status}
-                    </span>
-                  </>
-                )}
+                <p className="text-xs text-gray-500">
+                  {log.reason || STATUS_DESCRIPTIONS[log.new_status] || ''}
+                </p>
               </div>
-              {log.reason && (
-                <p className="text-xs text-gray-500 mt-1.5 italic">"{log.reason}"</p>
-              )}
-              <p className="text-[11px] text-gray-400 mt-1.5">{formatDate(log.created_at)}</p>
+
+              <p className="text-xs text-gray-400 whitespace-nowrap shrink-0">
+                {fmtDateTime(log.created_at)}
+              </p>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     </div>
   )
 }
 
-// ── Notes Tab ─────────────────────────────────────────────────
-function NotesTab({ applicationId, notes }: { applicationId: string; notes: NoteData[] }) {
+// ── Messages Tab ────────────────────────────────────────────────────────────
+function MessagesTab({ applicationId, notes, appUserId }: {
+  applicationId: string
+  notes: NoteData[]
+  appUserId: string
+}) {
   const [text, setText] = useState('')
-  const [isPublic, setIsPublic] = useState(false)
   const [sending, setSending] = useState(false)
   const router = useRouter()
+  const bottomRef = useRef<HTMLDivElement>(null)
 
   const send = async () => {
     if (!text.trim()) return
     setSending(true)
-    await addNote(applicationId, text.trim(), isPublic)
+    await addNote(applicationId, text.trim(), true)
     setText('')
     setSending(false)
     router.refresh()
   }
 
-  const handleKey = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) send()
-  }
-
   return (
-    <div className="space-y-4">
-      {/* Notes list */}
-      {notes.length === 0 ? (
-        <div className="text-center py-8">
-          <MessageSquare size={28} className="text-gray-200 mx-auto mb-2" />
-          <p className="text-gray-400 text-sm">No notes yet</p>
-        </div>
-      ) : (
-        <div className="space-y-2.5 max-h-72 overflow-y-auto pr-1">
-          {notes.map(note => (
-            <div key={note.id} className="bg-gray-50 rounded-xl p-3.5">
-              <div className="flex items-center justify-between gap-2 mb-1.5">
-                <span className="text-xs font-semibold text-brand-navy">Admin</span>
-                <div className="flex items-center gap-2">
-                  {note.is_public ? (
-                    <span className="text-[10px] bg-blue-50 text-blue-600 font-semibold px-1.5 py-0.5 rounded-full">
-                      Visible to applicant
-                    </span>
-                  ) : (
-                    <Lock size={10} className="text-gray-300" />
-                  )}
-                  <span className="text-[11px] text-gray-400">{formatDate(note.created_at)}</span>
+    <div>
+      <h3 className="font-bold text-brand-navy mb-1">Messages</h3>
+      <p className="text-sm text-gray-400 mb-5">Communication with the applicant</p>
+
+      <div className="min-h-[200px] max-h-[400px] overflow-y-auto space-y-3 mb-5">
+        {notes.length === 0 ? (
+          <div className="text-center py-10">
+            <MessageSquare size={28} className="text-gray-200 mx-auto mb-2" />
+            <p className="text-gray-400 text-sm">No messages yet</p>
+          </div>
+        ) : (
+          notes.map(note => {
+            const isAdmin = note.created_by !== appUserId
+            return (
+              <div key={note.id} className={`flex ${isAdmin ? 'justify-end' : 'justify-start'}`}>
+                <div className={`max-w-[70%] rounded-2xl px-4 py-3 ${
+                  isAdmin
+                    ? 'bg-brand-red text-white rounded-tr-none'
+                    : 'bg-gray-100 text-brand-navy rounded-tl-none'
+                }`}>
+                  <p className="text-sm leading-relaxed">{note.text}</p>
+                  <p className={`text-[11px] mt-1 ${isAdmin ? 'text-white/60' : 'text-gray-400'}`}>
+                    {fmtDateTime(note.created_at)}
+                  </p>
                 </div>
               </div>
-              <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{note.text}</p>
-            </div>
-          ))}
-        </div>
-      )}
+            )
+          })
+        )}
+        <div ref={bottomRef} />
+      </div>
 
-      {/* Add note form */}
-      <div className="border-t border-gray-100 pt-4 space-y-3">
-        <textarea
+      <div className="border-t border-gray-100 pt-4 flex gap-3">
+        <input
+          type="text"
           value={text}
           onChange={e => setText(e.target.value)}
-          onKeyDown={handleKey}
-          placeholder="Add a note… (Ctrl+Enter to send)"
-          rows={3}
-          className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-brand-red/20 focus:border-brand-red/30 transition-all"
+          onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); send() } }}
+          placeholder="Type a message..."
+          className="flex-1 bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-red/20 focus:border-brand-red/30 transition-all"
         />
-        <div className="flex items-center justify-between gap-3">
-          <label className="flex items-center gap-2 cursor-pointer select-none">
-            <input
-              type="checkbox"
-              checked={isPublic}
-              onChange={e => setIsPublic(e.target.checked)}
-              className="w-4 h-4 accent-brand-red rounded"
-            />
-            <span className="text-xs text-gray-500">Visible to applicant</span>
-          </label>
-          <button
-            onClick={send}
-            disabled={sending || !text.trim()}
-            className="flex items-center gap-1.5 bg-brand-navy hover:bg-opacity-90 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-semibold px-4 py-2 rounded-xl transition-all"
-          >
-            <Send size={11} />
-            {sending ? 'Saving...' : 'Add note'}
-          </button>
-        </div>
+        <button
+          onClick={send}
+          disabled={sending || !text.trim()}
+          className="flex items-center gap-1.5 bg-brand-red hover:bg-red-500 disabled:opacity-40 text-white text-sm font-semibold px-4 py-2 rounded-xl transition-all"
+        >
+          <Send size={13} />
+        </button>
       </div>
     </div>
   )
 }
 
-// ── Payments Tab ───────────────────────────────────────────────
+// ── Payments Tab ────────────────────────────────────────────────────────────
 function PaymentsTab({ app }: { app: AppData }) {
-  const paymentColors: Record<string, string> = {
-    paid:     'bg-green-100 text-green-700',
-    pending:  'bg-yellow-100 text-yellow-700',
-    unpaid:   'bg-gray-100 text-gray-500',
-    failed:   'bg-red-100 text-red-700',
-    refunded: 'bg-orange-100 text-orange-700',
-  }
-
   return (
-    <div className="space-y-4 max-w-sm">
-      <div className="bg-gray-50 rounded-xl p-5 space-y-4">
-        <div className="flex items-center justify-between">
-          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Payment Status</span>
-          <span className={`px-3 py-1 rounded-full text-xs font-bold ${paymentColors[app.payment_status] ?? 'bg-gray-100 text-gray-500'}`}>
-            {app.payment_status ?? '—'}
+    <div className="max-w-sm space-y-4">
+      <div className="border border-gray-100 rounded-xl p-5 space-y-3">
+        <div className="flex items-center justify-between pb-3 border-b border-gray-50">
+          <span className="font-bold text-brand-navy">Payment</span>
+          <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+            app.payment_status === 'paid'    ? 'bg-green-100 text-green-700' :
+            app.payment_status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
+                                               'bg-gray-100 text-gray-500'
+          }`}>
+            {app.payment_status ?? 'unpaid'}
           </span>
         </div>
-        <div className="space-y-3 divide-y divide-gray-100">
-          {[
-            ['Service fee',  '€70.00'],
-            ['Tax year',     String(app.tax_year)],
-            ['Payment type', 'Upfront'],
-          ].map(([label, value]) => (
-            <div key={label} className="flex justify-between pt-3 text-sm first:pt-0">
-              <span className="text-gray-400">{label}</span>
-              <span className="font-semibold text-brand-navy">{value}</span>
-            </div>
-          ))}
-        </div>
+        {[['Service fee', '€70.00'], ['Tax year', String(app.tax_year)], ['Type', 'Pay Upfront']].map(([label, value]) => (
+          <div key={label} className="flex justify-between text-sm">
+            <span className="text-gray-400">{label}</span>
+            <span className="font-semibold text-brand-navy">{value}</span>
+          </div>
+        ))}
       </div>
       <p className="text-xs text-gray-300 text-center">Full payment history coming soon</p>
     </div>

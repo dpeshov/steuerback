@@ -17,4 +17,5 @@ export async function addNote(applicationId: string, text: string, isPublic: boo
   })
 
   revalidatePath(`/admin/applications/${applicationId}`)
+  revalidatePath('/messages')
 }
