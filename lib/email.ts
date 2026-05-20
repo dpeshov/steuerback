@@ -1,5 +1,5 @@
 import type { Resend } from 'resend'
-import type { ApplicationStatus } from '@/types/database'
+import type { ApplicationStatus, DocumentReviewStatus } from '@/types/database'
 
 const FROM = 'SteuerBack <no-reply@steuerback.com>'
 function getResend() {
@@ -154,6 +154,46 @@ export function documentNeedsReuploadEmail(email: string, docLabel: string, admi
         <p style="margin:0;font-size:13px;color:#92400E"><strong>Note from our team:</strong> ${adminNote}</p>
       </div>` : ''}
       ${btn('Upload document', `${APP_URL}/documents`)}
+    `),
+  }
+}
+
+export function documentDeclinedEmail(
+  email: string,
+  docLabel: string,
+  status: DocumentReviewStatus,
+  adminNote: string | null,
+) {
+  const isRejected = status === 'rejected'
+  const accentColor = isRejected ? '#E63946' : '#F4A261'
+  const badgeText   = isRejected ? 'Document Rejected' : 'Reupload Required'
+  const subject     = isRejected
+    ? `Your ${docLabel} has been rejected`
+    : `Action required: Re-upload your ${docLabel}`
+  const title       = isRejected
+    ? `${docLabel} — rejected`
+    : `Please re-upload: ${docLabel}`
+  const intro       = isRejected
+    ? 'Unfortunately, our team was unable to accept the document you uploaded. Please see the reason below and contact support if you have questions.'
+    : 'Our team reviewed your document and it needs to be re-uploaded. Please see the reason below and upload a corrected version as soon as possible.'
+  const ctaText     = isRejected ? 'View Documents' : 'Upload document'
+
+  return {
+    from: FROM,
+    to: email,
+    subject,
+    html: base(subject, `
+      ${badge(badgeText, accentColor)}
+      <br><br>
+      ${h1(title)}
+      ${p(intro)}
+      ${adminNote ? `
+        <div style="background:${accentColor}08;border-left:3px solid ${accentColor};padding:14px 16px;border-radius:6px;margin:16px 0">
+          <p style="margin:0 0 4px;font-size:11px;font-weight:700;color:${accentColor};text-transform:uppercase;letter-spacing:0.5px">Reason from our team</p>
+          <p style="margin:0;font-size:14px;color:#333;line-height:1.6">${adminNote}</p>
+        </div>` : ''}
+      ${btn(ctaText, `${APP_URL}/documents`)}
+      ${p('<span style="font-size:13px;color:#888">Questions? Simply reply to this email and our team will get back to you.</span>')}
     `),
   }
 }
