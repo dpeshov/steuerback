@@ -3,8 +3,17 @@ import { notFound } from 'next/navigation'
 import type { ApplicationStatus } from '@/types/database'
 import ApplicationTabs from './ApplicationTabs'
 
-export default async function ApplicationDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function ApplicationDetailPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>
+  searchParams?: Promise<{ tab?: string }>
+}) {
   const { id } = await params
+  const sp = searchParams ? await searchParams : {}
+  const initialTab = sp.tab ?? 'overview'
+
   const supabase = createAdminClient()
 
   const { data: app } = await supabase
@@ -20,14 +29,16 @@ export default async function ApplicationDetailPage({ params }: { params: Promis
     { data: documents },
     { data: logs },
     { data: notes },
+    { data: payments },
   ] = await Promise.all([
     supabase.from('profiles').select('*').eq('user_id', app.user_id).single(),
     supabase.from('documents').select('*').eq('application_id', id).order('created_at', { ascending: false }),
     supabase.from('status_logs').select('*').eq('application_id', id).order('created_at', { ascending: false }),
     supabase.from('notes').select('id, text, created_by, is_public, created_at').eq('application_id', id).order('created_at', { ascending: true }),
+    supabase.from('payments').select('*').eq('application_id', id).order('created_at', { ascending: false }),
   ])
 
-  const user = app.users as { id: string; email: string; role: string; created_at: string } | null
+  const user   = app.users as { id: string; email: string; role: string; created_at: string } | null
   const status = app.status as ApplicationStatus
 
   return (
@@ -38,6 +49,8 @@ export default async function ApplicationDetailPage({ params }: { params: Promis
       logs={logs ?? []}
       notes={notes ?? []}
       userEmail={user?.email ?? '—'}
+      payments={payments ?? []}
+      initialTab={initialTab}
     />
   )
 }
