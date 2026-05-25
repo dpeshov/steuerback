@@ -1,6 +1,7 @@
 import { createAdminClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import { Users, FileText, CheckCircle, Clock, UserX, ChevronRight, MessageSquare, Phone } from 'lucide-react'
+import { getTranslations } from 'next-intl/server'
 
 const STATUS_BADGE: Record<string, string> = {
   completed:            'bg-green-100 text-green-700',
@@ -16,22 +17,10 @@ const STATUS_BADGE: Record<string, string> = {
   rejected:             'bg-gray-200 text-gray-500',
 }
 
-const STATUS_LABELS: Record<string, string> = {
-  completed:            'Completed',
-  submitted:            'Submitted',
-  in_review:            'In review',
-  ready_for_submission: 'Ready to submit',
-  ready_for_payment:    'Awaiting payment',
-  paid:                 'Paid',
-  missing_documents:    'Docs missing',
-  documents_pending:    'Docs pending',
-  profile_incomplete:   'Profile incomplete',
-  draft:                'Draft',
-  rejected:             'Rejected',
-}
-
 export default async function AdminUsersPage() {
   const supabase = createAdminClient()
+  const t = await getTranslations('admin.users')
+  const tStatus = await getTranslations('admin.statuses')
 
   const { data: users } = await supabase
     .from('users')
@@ -53,17 +42,17 @@ export default async function AdminUsersPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-brand-navy">Users</h1>
-        <p className="text-gray-500 text-sm mt-1">{total} registered accounts</p>
+        <h1 className="text-2xl font-bold text-brand-navy">{t('title')}</h1>
+        <p className="text-gray-500 text-sm mt-1">{t('registeredAccounts', { count: total })}</p>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: 'Total users',      value: total,     icon: Users,        color: 'text-brand-red' },
-          { label: 'Active',           value: active,    icon: Clock,        color: 'text-blue-500' },
-          { label: 'Have application', value: withApp,   icon: FileText,     color: 'text-indigo-500' },
-          { label: 'Completed refund', value: completed, icon: CheckCircle,  color: 'text-brand-success' },
+          { label: t('totalUsers'),      value: total,     icon: Users,        color: 'text-brand-red' },
+          { label: t('active'),          value: active,    icon: Clock,        color: 'text-blue-500' },
+          { label: t('haveApplication'), value: withApp,   icon: FileText,     color: 'text-indigo-500' },
+          { label: t('completedRefund'), value: completed, icon: CheckCircle,  color: 'text-brand-success' },
         ].map(({ label, value, icon: Icon, color }) => (
           <div key={label} className="bg-white rounded-2xl p-5 shadow-sm">
             <Icon size={20} className={`${color} mb-3`} />
@@ -79,12 +68,12 @@ export default async function AdminUsersPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-100 text-left">
-                <th className="px-6 py-4 font-semibold text-gray-500">User</th>
-                <th className="px-6 py-4 font-semibold text-gray-500">Location</th>
-                <th className="px-6 py-4 font-semibold text-gray-500">Last Employer</th>
-                <th className="px-6 py-4 font-semibold text-gray-500">Applications</th>
-                <th className="px-6 py-4 font-semibold text-gray-500">Joined</th>
-                <th className="px-6 py-4 font-semibold text-gray-500 text-right">Actions</th>
+                <th className="px-6 py-4 font-semibold text-gray-500">{t('user')}</th>
+                <th className="px-6 py-4 font-semibold text-gray-500">{t('location')}</th>
+                <th className="px-6 py-4 font-semibold text-gray-500">{t('lastEmployer')}</th>
+                <th className="px-6 py-4 font-semibold text-gray-500">{t('applications')}</th>
+                <th className="px-6 py-4 font-semibold text-gray-500">{t('joined')}</th>
+                <th className="px-6 py-4 font-semibold text-gray-500 text-right">{t('actions')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
@@ -110,7 +99,7 @@ export default async function AdminUsersPage() {
                         </div>
                         <div>
                           <p className="font-semibold text-brand-navy leading-tight">
-                            {fullName || <span className="text-gray-400 font-normal italic">No name</span>}
+                            {fullName || <span className="text-gray-400 font-normal italic">{t('noName')}</span>}
                           </p>
                           <p className="text-xs text-gray-400 mt-0.5">{user.email}</p>
                           {profile?.phone && (
@@ -140,14 +129,14 @@ export default async function AdminUsersPage() {
                     {/* Applications */}
                     <td className="px-6 py-4">
                       {apps.length === 0 ? (
-                        <span className="text-gray-400 text-xs">None</span>
+                        <span className="text-gray-400 text-xs">{t('none')}</span>
                       ) : (
                         <div className="flex flex-col gap-1">
                           {apps.slice(0, 2).map(app => (
                             <div key={app.id} className="flex items-center gap-2">
                               <span className="text-xs text-gray-500 w-8">{app.tax_year}</span>
                               <span className={`px-2 py-0.5 rounded-full text-[11px] font-semibold ${STATUS_BADGE[app.status] ?? 'bg-gray-100 text-gray-500'}`}>
-                                {STATUS_LABELS[app.status] ?? app.status}
+                                {tStatus(app.status as never) ?? app.status}
                               </span>
                             </div>
                           ))}
@@ -169,7 +158,7 @@ export default async function AdminUsersPage() {
                         {latestApp && (
                           <Link
                             href={`/admin/applications/${latestApp.id}?tab=messages`}
-                            title="Open messages"
+                            title={t('openMessages')}
                             className="p-1.5 rounded-lg text-gray-400 hover:text-brand-red hover:bg-brand-red/8 transition-colors"
                           >
                             <MessageSquare size={15} />
@@ -179,7 +168,7 @@ export default async function AdminUsersPage() {
                           href={`/admin/users/${user.id}`}
                           className="flex items-center gap-1 text-brand-red text-sm font-medium hover:underline"
                         >
-                          View <ChevronRight size={13} />
+                          {t('view')} <ChevronRight size={13} />
                         </Link>
                       </div>
                     </td>
@@ -219,7 +208,7 @@ export default async function AdminUsersPage() {
                   <div className="flex items-center gap-2 mt-1">
                     {latestApp && (
                       <span className={`px-2 py-0.5 rounded-full text-[11px] font-semibold ${STATUS_BADGE[latestApp.status] ?? 'bg-gray-100 text-gray-500'}`}>
-                        {STATUS_LABELS[latestApp.status] ?? latestApp.status}
+                        {tStatus(latestApp.status as never) ?? latestApp.status}
                       </span>
                     )}
                     <span className="text-xs text-gray-400">{profile?.city ?? ''}</span>
@@ -229,7 +218,7 @@ export default async function AdminUsersPage() {
                   {latestApp && (
                     <Link
                       href={`/admin/applications/${latestApp.id}?tab=messages`}
-                      title="Messages"
+                      title={t('openMessages')}
                       className="p-1.5 text-gray-400 hover:text-brand-red transition-colors"
                     >
                       <MessageSquare size={15} />
@@ -247,7 +236,7 @@ export default async function AdminUsersPage() {
         {!users?.length && (
           <div className="flex flex-col items-center justify-center py-16 gap-3">
             <UserX size={32} className="text-gray-300" />
-            <p className="text-gray-400 text-sm">No users yet</p>
+            <p className="text-gray-400 text-sm">{t('noUsersYet')}</p>
           </div>
         )}
       </div>

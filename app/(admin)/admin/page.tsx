@@ -2,9 +2,12 @@ import { createAdminClient } from '@/lib/supabase/server'
 import { FileText, Users, CheckCircle, Clock } from 'lucide-react'
 import Link from 'next/link'
 import { STATUS_LABELS } from '@/lib/utils'
+import { getTranslations } from 'next-intl/server'
 
 export default async function AdminDashboard() {
   const supabase = createAdminClient()
+  const t = await getTranslations('admin.dashboard')
+  const tStatus = await getTranslations('admin.statuses')
 
   const [
     { count: totalApps },
@@ -24,17 +27,17 @@ export default async function AdminDashboard() {
   ])
 
   const stats = [
-    { label: 'Total applications', value: totalApps ?? 0,    icon: FileText,    color: 'text-brand-red',     href: '/admin/applications' },
-    { label: 'Registered users',   value: totalUsers ?? 0,   icon: Users,       color: 'text-blue-500',      href: '/admin/users' },
-    { label: 'Completed',          value: completedApps ?? 0,icon: CheckCircle, color: 'text-brand-success', href: '/admin/applications?status=completed' },
-    { label: 'In review',          value: inReviewApps ?? 0, icon: Clock,       color: 'text-yellow-500',    href: '/admin/applications?status=in_review' },
+    { label: t('totalApplications'), value: totalApps ?? 0,    icon: FileText,    color: 'text-brand-red',     href: '/admin/applications' },
+    { label: t('registeredUsers'),   value: totalUsers ?? 0,   icon: Users,       color: 'text-blue-500',      href: '/admin/users' },
+    { label: t('completed'),         value: completedApps ?? 0,icon: CheckCircle, color: 'text-brand-success', href: '/admin/applications?status=completed' },
+    { label: t('inReview'),          value: inReviewApps ?? 0, icon: Clock,       color: 'text-yellow-500',    href: '/admin/applications?status=in_review' },
   ]
 
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-bold text-brand-navy">Admin Dashboard</h1>
-        <p className="text-gray-500 text-sm mt-1">Overview of SteuerBack operations</p>
+        <h1 className="text-2xl font-bold text-brand-navy">{t('title')}</h1>
+        <p className="text-gray-500 text-sm mt-1">{t('subtitle')}</p>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -53,13 +56,14 @@ export default async function AdminDashboard() {
 
       <div className="bg-white rounded-2xl shadow-sm">
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-          <h2 className="font-semibold text-brand-navy">Recent applications</h2>
-          <Link href="/admin/applications" className="text-sm text-brand-red hover:underline">View all</Link>
+          <h2 className="font-semibold text-brand-navy">{t('recentApplications')}</h2>
+          <Link href="/admin/applications" className="text-sm text-brand-red hover:underline">{t('viewAll')}</Link>
         </div>
         <div className="divide-y divide-gray-50">
           {recentApps?.map(app => {
             const userRecord = app.users as { email: string } | null
             const applicantName = (app as { applicant_name?: string | null }).applicant_name
+            const statusKey = app.status as keyof typeof STATUS_LABELS
             return (
               <Link
                 key={app.id}
@@ -71,17 +75,17 @@ export default async function AdminDashboard() {
                     {applicantName ?? userRecord?.email ?? '—'}
                   </p>
                   <p className="text-xs text-gray-400 mt-0.5">
-                    {applicantName ? userRecord?.email + ' · ' : ''}Tax year {app.tax_year}
+                    {applicantName ? userRecord?.email + ' · ' : ''}{t('taxYear')} {app.tax_year}
                   </p>
                 </div>
                 <span className="text-xs font-semibold bg-gray-100 text-brand-navy px-3 py-1 rounded-full">
-                  {STATUS_LABELS[app.status as keyof typeof STATUS_LABELS] ?? app.status}
+                  {tStatus(statusKey) ?? STATUS_LABELS[statusKey] ?? app.status}
                 </span>
               </Link>
             )
           })}
           {!recentApps?.length && (
-            <p className="px-6 py-8 text-center text-gray-400 text-sm">No applications yet</p>
+            <p className="px-6 py-8 text-center text-gray-400 text-sm">{t('noApplications')}</p>
           )}
         </div>
       </div>

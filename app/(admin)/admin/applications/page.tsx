@@ -1,8 +1,8 @@
 import { createAdminClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import { ChevronRight } from 'lucide-react'
-import { STATUS_LABELS } from '@/lib/utils'
 import type { ApplicationStatus } from '@/types/database'
+import { getTranslations } from 'next-intl/server'
 
 const STATUS_COLORS: Record<ApplicationStatus, string> = {
   draft:                  'bg-gray-100 text-gray-600',
@@ -31,6 +31,8 @@ export default async function AdminApplicationsPage({
 }) {
   const { status: statusFilter } = await searchParams
   const supabase = createAdminClient()
+  const t = await getTranslations('admin.applications')
+  const tStatus = await getTranslations('admin.statuses')
 
   let query = supabase
     .from('applications')
@@ -43,18 +45,22 @@ export default async function AdminApplicationsPage({
 
   const { data: applications } = await query
 
+  const statusLabel = (s: string) => tStatus(s as ApplicationStatus) ?? s
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div>
           <h1 className="text-2xl font-bold text-brand-navy">
-            {statusFilter ? `${STATUS_LABELS[statusFilter as ApplicationStatus] ?? statusFilter} applications` : 'All Applications'}
+            {statusFilter
+              ? `${statusLabel(statusFilter)} — ${t('title').toLowerCase()}`
+              : t('title')}
           </h1>
-          <p className="text-gray-500 text-sm mt-1">{applications?.length ?? 0} results</p>
+          <p className="text-gray-500 text-sm mt-1">{t('results', { count: applications?.length ?? 0 })}</p>
         </div>
         {statusFilter && (
           <Link href="/admin/applications" className="text-sm text-brand-red hover:underline">
-            ← All statuses
+            {t('allStatuses')}
           </Link>
         )}
       </div>
@@ -67,7 +73,7 @@ export default async function AdminApplicationsPage({
             !statusFilter ? 'bg-brand-navy text-white' : 'bg-white border border-gray-200 text-gray-600 hover:border-gray-300'
           }`}
         >
-          All
+          {t('all')}
         </Link>
         {ALL_STATUSES.map(s => (
           <Link
@@ -79,7 +85,7 @@ export default async function AdminApplicationsPage({
                 : 'bg-white border border-gray-200 text-gray-600 hover:border-gray-300'
             }`}
           >
-            {STATUS_LABELS[s]}
+            {statusLabel(s)}
           </Link>
         ))}
       </div>
@@ -90,12 +96,12 @@ export default async function AdminApplicationsPage({
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-100 text-left">
-                <th className="px-6 py-4 font-semibold text-gray-500">Applicant</th>
-                <th className="px-6 py-4 font-semibold text-gray-500">Account</th>
-                <th className="px-6 py-4 font-semibold text-gray-500">Year</th>
-                <th className="px-6 py-4 font-semibold text-gray-500">Status</th>
-                <th className="px-6 py-4 font-semibold text-gray-500">Payment</th>
-                <th className="px-6 py-4 font-semibold text-gray-500">Created</th>
+                <th className="px-6 py-4 font-semibold text-gray-500">{t('applicant')}</th>
+                <th className="px-6 py-4 font-semibold text-gray-500">{t('account')}</th>
+                <th className="px-6 py-4 font-semibold text-gray-500">{t('year')}</th>
+                <th className="px-6 py-4 font-semibold text-gray-500">{t('status')}</th>
+                <th className="px-6 py-4 font-semibold text-gray-500">{t('payment')}</th>
+                <th className="px-6 py-4 font-semibold text-gray-500">{t('created')}</th>
                 <th className="px-6 py-4 font-semibold text-gray-500"></th>
               </tr>
             </thead>
@@ -111,12 +117,12 @@ export default async function AdminApplicationsPage({
                       {applicantName && <p className="text-xs text-gray-400 mt-0.5">{user?.email}</p>}
                     </td>
                     <td className="px-6 py-4 text-gray-500 text-xs truncate max-w-[160px]">
-                      {applicantName ? '(agent)' : user?.email ?? '—'}
+                      {applicantName ? t('agent') : user?.email ?? '—'}
                     </td>
                     <td className="px-6 py-4 text-gray-600">{app.tax_year}</td>
                     <td className="px-6 py-4">
                       <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${STATUS_COLORS[status] ?? 'bg-gray-100 text-gray-600'}`}>
-                        {STATUS_LABELS[status] ?? status}
+                        {statusLabel(status)}
                       </span>
                     </td>
                     <td className="px-6 py-4">
@@ -133,7 +139,7 @@ export default async function AdminApplicationsPage({
                     </td>
                     <td className="px-6 py-4">
                       <Link href={`/admin/applications/${app.id}`} className="text-brand-red font-medium hover:underline text-sm">
-                        View →
+                        {t('view')}
                       </Link>
                     </td>
                   </tr>
@@ -163,7 +169,7 @@ export default async function AdminApplicationsPage({
                   <div className="flex items-center gap-2 mt-1 flex-wrap">
                     <span className="text-xs text-gray-400">Tax {app.tax_year}</span>
                     <span className={`px-2 py-0.5 rounded-full text-[11px] font-semibold ${STATUS_COLORS[status] ?? 'bg-gray-100 text-gray-600'}`}>
-                      {STATUS_LABELS[status] ?? status}
+                      {statusLabel(status)}
                     </span>
                   </div>
                 </div>
@@ -174,7 +180,7 @@ export default async function AdminApplicationsPage({
         </div>
 
         {!applications?.length && (
-          <div className="px-6 py-12 text-center text-gray-400 text-sm">No applications found</div>
+          <div className="px-6 py-12 text-center text-gray-400 text-sm">{t('noApplicationsFound')}</div>
         )}
       </div>
     </div>

@@ -3,6 +3,7 @@
 import { useState, useTransition, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { useTranslations } from 'next-intl'
 import { createClient } from '@/lib/supabase/client'
 import {
   ArrowLeft, User, FileText, Clock, MessageSquare, CreditCard,
@@ -10,7 +11,7 @@ import {
   Phone, Mail, MapPin, Calendar, Briefcase,
   CheckCircle, XCircle, Plus, Loader2, Building2,
 } from 'lucide-react'
-import { STATUS_LABELS, formatDate } from '@/lib/utils'
+import { formatDate } from '@/lib/utils'
 import { updateApplicationStatus } from '@/app/actions/updateApplicationStatus'
 import { updateDocumentReview } from '@/app/actions/updateDocumentReview'
 import { addNote } from '@/app/actions/addNote'
@@ -168,6 +169,8 @@ export default function ApplicationTabs({
   const [headerStatus, setHeaderStatus] = useState<ApplicationStatus>(app.status)
   const [isPending, startTransition] = useTransition()
   const router = useRouter()
+  const t = useTranslations('admin.applicationDetail')
+  const tStatus = useTranslations('admin.statuses')
 
   const publicNotes   = notes.filter(n => n.is_public)
   const internalNotes = notes.filter(n => !n.is_public)
@@ -178,6 +181,10 @@ export default function ApplicationTabs({
     || userEmail
     || '—'
 
+  const statusLabel = (s: string) => {
+    try { return tStatus(s as ApplicationStatus) } catch { return s }
+  }
+
   const handleSaveStatus = () => {
     if (headerStatus === app.status) return
     startTransition(async () => {
@@ -187,19 +194,19 @@ export default function ApplicationTabs({
   }
 
   const TABS = [
-    { id: 'overview',  label: 'Overview',  icon: User },
-    { id: 'profile',   label: 'Profile',   icon: User },
-    { id: 'documents', label: 'Documents', icon: FileText,      badge: documents.length },
-    { id: 'timeline',  label: 'Timeline',  icon: Clock },
-    { id: 'messages',  label: 'Messages',  icon: MessageSquare, badge: publicNotes.length },
-    { id: 'payments',  label: 'Payments',  icon: CreditCard },
+    { id: 'overview',  label: t('overview'),  icon: User },
+    { id: 'profile',   label: t('profile'),   icon: User },
+    { id: 'documents', label: t('documents'), icon: FileText,      badge: documents.length },
+    { id: 'timeline',  label: t('timeline'),  icon: Clock },
+    { id: 'messages',  label: t('messages'),  icon: MessageSquare, badge: publicNotes.length },
+    { id: 'payments',  label: t('payments'),  icon: CreditCard },
   ]
 
   const quickActions = [
-    { label: 'Request Document',    status: 'missing_documents'    as ApplicationStatus, icon: AlertCircle },
-    { label: 'Mark Docs Verified',  status: 'ready_for_submission' as ApplicationStatus, icon: FileCheck },
-    { label: 'Submit to Finanzamt', status: 'submitted'            as ApplicationStatus, icon: Send },
-    { label: 'Mark Refund Paid',    status: 'completed'            as ApplicationStatus, icon: Banknote },
+    { label: t('requestDocument'),    status: 'missing_documents'    as ApplicationStatus, icon: AlertCircle },
+    { label: t('markDocsVerified'),   status: 'ready_for_submission' as ApplicationStatus, icon: FileCheck },
+    { label: t('submitToFinanzamt'),  status: 'submitted'            as ApplicationStatus, icon: Send },
+    { label: t('markRefundPaid'),     status: 'completed'            as ApplicationStatus, icon: Banknote },
   ]
 
   return (
@@ -213,11 +220,11 @@ export default function ApplicationTabs({
             </Link>
             <h1 className="text-2xl font-black text-brand-navy">{appId}</h1>
             <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${STATUS_COLORS[app.status]}`}>
-              {STATUS_LABELS[app.status]}
+              {statusLabel(app.status)}
             </span>
           </div>
           <p className="text-sm text-gray-400 ml-6">
-            {displayName} &bull; Created {fmtDate(app.created_at)}
+            {displayName} &bull; {t('created')} {fmtDate(app.created_at)}
           </p>
         </div>
 
@@ -228,7 +235,7 @@ export default function ApplicationTabs({
             className="border border-gray-200 bg-white rounded-xl px-3 py-2 text-sm text-brand-navy font-medium focus:outline-none focus:ring-2 focus:ring-brand-red/20"
           >
             {ALL_STATUSES.map(s => (
-              <option key={s} value={s}>{STATUS_LABELS[s]}</option>
+              <option key={s} value={s}>{statusLabel(s)}</option>
             ))}
           </select>
           <button
@@ -236,7 +243,7 @@ export default function ApplicationTabs({
             disabled={isPending || headerStatus === app.status}
             className="bg-brand-red hover:bg-red-500 active:bg-red-600 disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold text-sm px-4 py-2 rounded-xl transition-all"
           >
-            {isPending ? 'Saving…' : 'Save Changes'}
+            {isPending ? t('saving') : t('saveChanges')}
           </button>
         </div>
       </div>
@@ -247,7 +254,7 @@ export default function ApplicationTabs({
           <button
             key={status}
             onClick={() => {
-              if (!confirm(`Set status to "${STATUS_LABELS[status]}"?`)) return
+              if (!confirm(`Set status to "${statusLabel(status)}"?`)) return
               startTransition(async () => {
                 await updateApplicationStatus(app.id, status, app.status, `Quick action: ${label}`)
                 router.refresh()
@@ -310,6 +317,7 @@ function OverviewTab({ app, profile, userEmail, documents, internalNotes }: {
   const [noteText, setNoteText] = useState('')
   const [sending, setSending] = useState(false)
   const router = useRouter()
+  const t = useTranslations('admin.overview')
 
   const fullName = [profile?.first_name, profile?.last_name].filter(Boolean).join(' ') || app.applicant_name || '—'
   const initials = fullName !== '—'
@@ -332,7 +340,7 @@ function OverviewTab({ app, profile, userEmail, documents, internalNotes }: {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Applicant */}
         <div className="border border-gray-100 rounded-xl p-5">
-          <h3 className="font-bold text-brand-navy mb-4">Applicant</h3>
+          <h3 className="font-bold text-brand-navy mb-4">{t('applicant')}</h3>
           <div className="flex items-center gap-3 mb-4">
             <div className="w-10 h-10 rounded-full bg-brand-red/10 flex items-center justify-center shrink-0">
               <span className="text-brand-red font-black text-sm">{initials}</span>
@@ -366,7 +374,7 @@ function OverviewTab({ app, profile, userEmail, documents, internalNotes }: {
 
         {/* Work in Germany */}
         <div className="border border-gray-100 rounded-xl p-5">
-          <h3 className="font-bold text-brand-navy mb-4">Work in Germany</h3>
+          <h3 className="font-bold text-brand-navy mb-4">{t('workInGermany')}</h3>
           <div className="space-y-2.5 mb-4">
             {profile?.employer_name && (
               <div className="flex items-center gap-2 text-sm text-gray-600">
@@ -377,22 +385,22 @@ function OverviewTab({ app, profile, userEmail, documents, internalNotes }: {
             {profile?.work_start && (
               <div className="flex items-center gap-2 text-sm text-gray-600">
                 <Calendar size={13} className="text-gray-400 shrink-0" />
-                <span>{profile.work_start}{profile.work_end ? ` - ${profile.work_end}` : ' - present'}</span>
+                <span>{profile.work_start}{profile.work_end ? ` - ${profile.work_end}` : ` - ${t('present')}`}</span>
               </div>
             )}
             {profile?.gross_income_eur && (
               <div className="flex items-center gap-2 text-sm text-gray-600">
                 <span className="text-gray-400 font-bold text-xs shrink-0">€</span>
-                <span>~€{Number(profile.gross_income_eur).toLocaleString()} earnings</span>
+                <span>~€{Number(profile.gross_income_eur).toLocaleString()} {t('earnings')}</span>
               </div>
             )}
             {!profile?.employer_name && !profile?.work_start && (
-              <p className="text-xs text-gray-400">No employment data yet</p>
+              <p className="text-xs text-gray-400">{t('noEmploymentData')}</p>
             )}
           </div>
           <div className="flex flex-wrap gap-1.5">
             <span className="px-2.5 py-1 bg-gray-100 text-gray-600 text-xs rounded-full font-medium">
-              Tax Year: {app.tax_year}
+              {t('taxYear')}: {app.tax_year}
             </span>
             {profile?.tax_id && (
               <span className="px-2.5 py-1 bg-gray-100 text-gray-600 text-xs rounded-full font-medium">Has Tax ID</span>
@@ -405,18 +413,18 @@ function OverviewTab({ app, profile, userEmail, documents, internalNotes }: {
 
         {/* Payment */}
         <div className="border border-gray-100 rounded-xl p-5">
-          <h3 className="font-bold text-brand-navy mb-4">Payment</h3>
+          <h3 className="font-bold text-brand-navy mb-4">{t('payment')}</h3>
           <div className="space-y-3">
             <div className="flex justify-between text-sm">
-              <span className="text-gray-400">Service Fee</span>
+              <span className="text-gray-400">{t('serviceFee')}</span>
               <span className="font-semibold text-brand-navy">€70</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-gray-400">Type</span>
-              <span className="font-semibold text-brand-navy">Pay Upfront</span>
+              <span className="text-gray-400">{t('type')}</span>
+              <span className="font-semibold text-brand-navy">{t('payUpfront')}</span>
             </div>
             <div className="flex justify-between text-sm items-center">
-              <span className="text-gray-400">Status</span>
+              <span className="text-gray-400">{t('status')}</span>
               <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${
                 app.payment_status === 'paid'    ? 'bg-green-100 text-green-700' :
                 app.payment_status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
@@ -433,7 +441,7 @@ function OverviewTab({ app, profile, userEmail, documents, internalNotes }: {
       <div className="border border-gray-100 rounded-xl p-5">
         <h3 className="font-bold text-brand-navy mb-4 flex items-center gap-2">
           <FileText size={14} className="text-gray-400" />
-          Internal Notes
+          {t('internalNotes')}
         </h3>
         {internalNotes.length > 0 && (
           <div className="space-y-2.5 mb-4 max-h-48 overflow-y-auto">
@@ -450,7 +458,7 @@ function OverviewTab({ app, profile, userEmail, documents, internalNotes }: {
             value={noteText}
             onChange={e => setNoteText(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) sendNote() }}
-            placeholder="Add an internal note..."
+            placeholder={t('addNotePlaceholder')}
             rows={3}
             className="flex-1 bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-brand-red/20 focus:border-brand-red/30 transition-all"
           />
@@ -459,7 +467,7 @@ function OverviewTab({ app, profile, userEmail, documents, internalNotes }: {
             disabled={sending || !noteText.trim()}
             className="self-end flex items-center gap-1.5 bg-brand-navy hover:bg-opacity-90 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-all"
           >
-            {sending ? 'Saving…' : 'Add Note'}
+            {sending ? '…' : t('addNote')}
           </button>
         </div>
       </div>
@@ -469,8 +477,10 @@ function OverviewTab({ app, profile, userEmail, documents, internalNotes }: {
 
 // ── Profile Tab ─────────────────────────────────────────────────────────────
 function ProfileTab({ profile, userEmail }: { profile: ProfileData; userEmail: string }) {
+  const t = useTranslations('admin.profileTab')
+
   if (!profile) {
-    return <div className="text-center py-12 text-gray-400 text-sm">No profile data yet</div>
+    return <div className="text-center py-12 text-gray-400 text-sm">{t('noProfileData')}</div>
   }
 
   const flag = NATIONALITY_FLAGS[profile.nationality ?? ''] ?? ''
@@ -486,43 +496,43 @@ function ProfileTab({ profile, userEmail }: { profile: ProfileData; userEmail: s
     <div className="space-y-4">
       <div className="grid md:grid-cols-2 gap-4">
         <div className="border border-gray-100 rounded-xl p-5">
-          <h3 className="font-bold text-brand-navy mb-4">Personal Information</h3>
+          <h3 className="font-bold text-brand-navy mb-4">{t('personalInformation')}</h3>
           <div className="grid grid-cols-2 gap-x-6 gap-y-4">
-            <Field label="First Name"           value={profile.first_name} />
-            <Field label="Last Name"            value={profile.last_name} />
-            <Field label="Date of Birth"        value={profile.date_of_birth} />
-            <Field label="Nationality"          value={profile.nationality ? `${flag} ${profile.nationality}` : null} />
-            <Field label="Passport Number"      value={profile.passport_number} />
-            <Field label="Country of Residence" value={profile.country_of_residence} />
+            <Field label={t('firstName')}           value={profile.first_name} />
+            <Field label={t('lastName')}            value={profile.last_name} />
+            <Field label={t('dateOfBirth')}         value={profile.date_of_birth} />
+            <Field label={t('nationality')}         value={profile.nationality ? `${flag} ${profile.nationality}` : null} />
+            <Field label={t('passportNumber')}      value={profile.passport_number} />
+            <Field label={t('countryOfResidence')}  value={profile.country_of_residence} />
           </div>
         </div>
         <div className="border border-gray-100 rounded-xl p-5">
-          <h3 className="font-bold text-brand-navy mb-4">Contact Information</h3>
+          <h3 className="font-bold text-brand-navy mb-4">{t('contactInformation')}</h3>
           <div className="space-y-4">
-            <Field label="Email"   value={userEmail} />
-            <Field label="Phone"   value={profile.phone} />
-            <Field label="Address" value={[profile.address, profile.city, profile.country_of_residence].filter(Boolean).join(', ') || null} />
+            <Field label={t('email')}   value={userEmail} />
+            <Field label={t('phone')}   value={profile.phone} />
+            <Field label={t('address')} value={[profile.address, profile.city, profile.country_of_residence].filter(Boolean).join(', ') || null} />
           </div>
         </div>
       </div>
       <div className="border border-gray-100 rounded-xl p-5">
-        <h3 className="font-bold text-brand-navy mb-4">Bank Details</h3>
+        <h3 className="font-bold text-brand-navy mb-4">{t('bankDetails')}</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Field label="IBAN"           value={profile.iban} />
-          <Field label="Bank Name"      value={profile.bank_name} />
-          <Field label="Account Holder" value={profile.bank_account_holder} />
+          <Field label={t('iban')}          value={profile.iban} />
+          <Field label={t('bankName')}      value={profile.bank_name} />
+          <Field label={t('accountHolder')} value={profile.bank_account_holder} />
         </div>
       </div>
       {(profile.employer_name || profile.work_start || profile.gross_income_eur) && (
         <div className="border border-gray-100 rounded-xl p-5">
-          <h3 className="font-bold text-brand-navy mb-4">Employment</h3>
+          <h3 className="font-bold text-brand-navy mb-4">{t('employment')}</h3>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
-            <Field label="Employer"     value={profile.employer_name} />
-            <Field label="Work Period"  value={profile.work_start ? `${profile.work_start} → ${profile.work_end ?? 'present'}` : null} />
-            <Field label="Gross Income" value={profile.gross_income_eur ? `€${Number(profile.gross_income_eur).toLocaleString()}` : null} />
-            {profile.tax_id          && <Field label="Tax ID"    value={profile.tax_id} />}
-            {profile.student_status != null && <Field label="Student" value={profile.student_status ? 'Yes' : 'No'} />}
-            {profile.university      && <Field label="University" value={profile.university} />}
+            <Field label={t('employer')}    value={profile.employer_name} />
+            <Field label={t('workPeriod')}  value={profile.work_start ? `${profile.work_start} → ${profile.work_end ?? t('present')}` : null} />
+            <Field label={t('grossIncome')} value={profile.gross_income_eur ? `€${Number(profile.gross_income_eur).toLocaleString()}` : null} />
+            {profile.tax_id          && <Field label={t('taxId')}     value={profile.tax_id} />}
+            {profile.student_status != null && <Field label={t('student')} value={profile.student_status ? t('yes') : t('no')} />}
+            {profile.university      && <Field label={t('university')} value={profile.university} />}
           </div>
         </div>
       )}
@@ -545,6 +555,7 @@ function DocumentsTab({ documents, appId, userId }: {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const router   = useRouter()
   const supabase = createClient()
+  const t = useTranslations('admin.documentsTab')
 
   const handleReview = async (docId: string, status: DocumentReviewStatus) => {
     setLoadingId(docId)
@@ -582,6 +593,14 @@ function DocumentsTab({ documents, appId, userId }: {
     }
   }
 
+  const docTypeLabel = (key: string) => {
+    try { return t(`docTypes.${key}` as never) } catch { return DOC_TYPE_LABELS[key] ?? key }
+  }
+  const docStatusStyle = (status: string) => {
+    const base = DOC_STATUS_STYLE[status] ?? DOC_STATUS_STYLE.pending
+    try { return { ...base, label: t(`docStatus.${status}` as never) } } catch { return base }
+  }
+
   return (
     <div className="space-y-5">
       {/* ── Admin Upload Section ── */}
@@ -595,8 +614,8 @@ function DocumentsTab({ documents, appId, userId }: {
               <Upload size={13} className="text-brand-red" />
             </div>
             <div>
-              <p className="text-sm font-bold text-brand-navy">Upload document for applicant</p>
-              <p className="text-xs text-gray-400">Admin upload — automatically marked as approved</p>
+              <p className="text-sm font-bold text-brand-navy">{t('uploadForApplicant')}</p>
+              <p className="text-xs text-gray-400">{t('adminUploadDesc')}</p>
             </div>
           </div>
           <Plus
@@ -609,21 +628,21 @@ function DocumentsTab({ documents, appId, userId }: {
           <form onSubmit={handleAdminUpload} className="px-5 py-4 bg-white border-t border-dashed border-brand-red/20 space-y-3">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-semibold text-gray-500 mb-1.5">Document Type</label>
+                <label className="block text-xs font-semibold text-gray-500 mb-1.5">{t('documentType')}</label>
                 <select
                   value={uploadType}
                   onChange={e => setUploadType(e.target.value)}
                   required
                   className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-red/20 focus:border-brand-red/40 bg-gray-50"
                 >
-                  <option value="">Select type…</option>
-                  {Object.entries(DOC_TYPE_LABELS).map(([k, v]) => (
-                    <option key={k} value={k}>{v}</option>
+                  <option value="">{t('selectType')}</option>
+                  {Object.keys(DOC_TYPE_LABELS).map(k => (
+                    <option key={k} value={k}>{docTypeLabel(k)}</option>
                   ))}
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-semibold text-gray-500 mb-1.5">File</label>
+                <label className="block text-xs font-semibold text-gray-500 mb-1.5">{t('file')}</label>
                 <input
                   ref={fileInputRef}
                   type="file"
@@ -656,14 +675,14 @@ function DocumentsTab({ documents, appId, userId }: {
                 className="flex items-center gap-2 bg-brand-red hover:bg-red-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-semibold px-4 py-2 rounded-lg transition-all"
               >
                 {uploading ? <Loader2 size={13} className="animate-spin" /> : <Upload size={13} />}
-                {uploading ? 'Uploading…' : 'Upload & Approve'}
+                {uploading ? t('uploading') : t('uploadAndApprove')}
               </button>
               <button
                 type="button"
                 onClick={() => { setShowUpload(false); setUploadError('') }}
                 className="text-sm text-gray-400 hover:text-gray-600 transition-colors"
               >
-                Cancel
+                {t('cancel')}
               </button>
             </div>
           </form>
@@ -674,26 +693,26 @@ function DocumentsTab({ documents, appId, userId }: {
       {documents.length === 0 ? (
         <div className="text-center py-10">
           <FileText size={32} className="text-gray-200 mx-auto mb-3" />
-          <p className="text-gray-400 text-sm">No documents uploaded yet</p>
+          <p className="text-gray-400 text-sm">{t('noDocumentsYet')}</p>
         </div>
       ) : (
         <div>
           <div className="mb-4">
-            <h3 className="font-bold text-brand-navy text-base">Uploaded Documents</h3>
-            <p className="text-sm text-gray-400">Review and approve documents submitted by the applicant</p>
+            <h3 className="font-bold text-brand-navy text-base">{t('uploadedDocuments')}</h3>
+            <p className="text-sm text-gray-400">{t('uploadedDocumentsDesc')}</p>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-100">
-                  {['Document', 'Type', 'Status', 'Uploaded', 'Admin Notes', 'Actions'].map(h => (
+                  {[t('document'), t('type'), t('status'), t('uploaded'), t('adminNotes'), t('actions')].map(h => (
                     <th key={h} className="text-left text-xs font-semibold text-gray-400 pb-3 pr-4 last:pr-0">{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {documents.map(doc => {
-                  const style     = DOC_STATUS_STYLE[doc.review_status] ?? DOC_STATUS_STYLE.pending
+                  const style     = docStatusStyle(doc.review_status)
                   const isLoading = loadingId === doc.id
                   return (
                     <tr key={doc.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
@@ -702,7 +721,7 @@ function DocumentsTab({ documents, appId, userId }: {
                       </td>
                       <td className="py-3.5 pr-4">
                         <span className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded-md font-medium whitespace-nowrap">
-                          {DOC_TYPE_LABELS[doc.document_type] ?? doc.document_type}
+                          {docTypeLabel(doc.document_type)}
                         </span>
                       </td>
                       <td className="py-3.5 pr-4">
@@ -720,7 +739,7 @@ function DocumentsTab({ documents, appId, userId }: {
                         <div className="flex items-center gap-1">
                           <button
                             onClick={() => openFile(doc.file_path)}
-                            title="Download"
+                            title={t('download')}
                             className="p-1.5 text-gray-400 hover:text-brand-navy hover:bg-gray-100 rounded-lg transition-colors"
                           >
                             <Download size={13} />
@@ -730,7 +749,7 @@ function DocumentsTab({ documents, appId, userId }: {
                               <button
                                 onClick={() => handleReview(doc.id, 'approved')}
                                 disabled={isLoading}
-                                title="Approve"
+                                title={t('approve')}
                                 className="p-1.5 text-green-500 hover:text-green-700 hover:bg-green-50 rounded-lg transition-colors disabled:opacity-40"
                               >
                                 <CheckCircle size={13} />
@@ -738,7 +757,7 @@ function DocumentsTab({ documents, appId, userId }: {
                               <button
                                 onClick={() => handleReview(doc.id, 'needs_reupload')}
                                 disabled={isLoading}
-                                title="Request reupload"
+                                title={t('requestReupload')}
                                 className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-40"
                               >
                                 <XCircle size={13} />
@@ -761,33 +780,29 @@ function DocumentsTab({ documents, appId, userId }: {
 
 // ── Timeline Tab ────────────────────────────────────────────────────────────
 function TimelineTab({ logs }: { logs: LogData[] }) {
+  const t = useTranslations('admin.timelineTab')
+  const tStatus = useTranslations('admin.statuses')
+
   if (!logs.length) {
     return (
       <div className="text-center py-12">
         <Clock size={32} className="text-gray-200 mx-auto mb-3" />
-        <p className="text-gray-400 text-sm">No status changes recorded yet</p>
+        <p className="text-gray-400 text-sm">{t('noStatusChanges')}</p>
       </div>
     )
   }
 
-  const STATUS_DESCRIPTIONS: Partial<Record<string, string>> = {
-    draft:                'Application created',
-    profile_incomplete:   'Profile needs completion',
-    documents_pending:    'Awaiting documents',
-    ready_for_payment:    'Payment required',
-    paid:                 'Payment confirmed',
-    in_review:            'Under admin review',
-    missing_documents:    'Additional documents requested',
-    ready_for_submission: 'Documents received',
-    submitted:            'Submitted to Finanzamt',
-    completed:            'Refund processed',
-    rejected:             'Application rejected',
+  const statusDesc = (key: string) => {
+    try { return t(`statusDescriptions.${key}` as never) } catch { return '' }
+  }
+  const statusLabel = (s: string) => {
+    try { return tStatus(s as ApplicationStatus) } catch { return s }
   }
 
   return (
     <div>
-      <h3 className="font-bold text-brand-navy mb-1">Application Timeline</h3>
-      <p className="text-sm text-gray-400 mb-6">Track the progress of this application</p>
+      <h3 className="font-bold text-brand-navy mb-1">{t('title')}</h3>
+      <p className="text-sm text-gray-400 mb-6">{t('subtitle')}</p>
       <div className="relative pl-8">
         <div className="absolute left-3 top-3 bottom-3 w-px bg-gray-100" />
         <div className="space-y-5">
@@ -802,10 +817,10 @@ function TimelineTab({ logs }: { logs: LogData[] }) {
                 <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-bold mb-1 ${
                   STATUS_COLORS[log.new_status as ApplicationStatus] ?? 'bg-gray-100 text-gray-600'
                 }`}>
-                  {STATUS_LABELS[log.new_status as ApplicationStatus] ?? log.new_status}
+                  {statusLabel(log.new_status)}
                 </span>
                 <p className="text-xs text-gray-500">
-                  {log.reason || STATUS_DESCRIPTIONS[log.new_status] || ''}
+                  {log.reason || statusDesc(log.new_status)}
                 </p>
               </div>
               <p className="text-xs text-gray-400 whitespace-nowrap shrink-0">
@@ -829,6 +844,7 @@ function MessagesTab({ applicationId, notes, appUserId }: {
   const [sending, setSending] = useState(false)
   const router    = useRouter()
   const bottomRef = useRef<HTMLDivElement>(null)
+  const t = useTranslations('admin.messagesTab')
 
   const send = async () => {
     if (!text.trim()) return
@@ -841,13 +857,13 @@ function MessagesTab({ applicationId, notes, appUserId }: {
 
   return (
     <div>
-      <h3 className="font-bold text-brand-navy mb-1">Messages</h3>
-      <p className="text-sm text-gray-400 mb-5">Communication with the applicant</p>
+      <h3 className="font-bold text-brand-navy mb-1">{t('title')}</h3>
+      <p className="text-sm text-gray-400 mb-5">{t('subtitle')}</p>
       <div className="min-h-[200px] max-h-[400px] overflow-y-auto space-y-3 mb-5">
         {notes.length === 0 ? (
           <div className="text-center py-10">
             <MessageSquare size={28} className="text-gray-200 mx-auto mb-2" />
-            <p className="text-gray-400 text-sm">No messages yet</p>
+            <p className="text-gray-400 text-sm">{t('noMessages')}</p>
           </div>
         ) : (
           notes.map(note => {
@@ -876,7 +892,7 @@ function MessagesTab({ applicationId, notes, appUserId }: {
           value={text}
           onChange={e => setText(e.target.value)}
           onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); send() } }}
-          placeholder="Type a message..."
+          placeholder={t('placeholder')}
           className="flex-1 bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-red/20 focus:border-brand-red/30 transition-all"
         />
         <button
@@ -907,6 +923,7 @@ function PaymentsTab({ app, payments }: { app: AppData; payments: PaymentRecord[
 
   const router   = useRouter()
   const supabase = createClient()
+  const t = useTranslations('admin.paymentsTab')
 
   const handleManualPayment = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -937,10 +954,10 @@ function PaymentsTab({ app, payments }: { app: AppData; payments: PaymentRecord[
   }
 
   const methodLabel = (piId: string | null) => {
-    if (!piId) return 'Online (Stripe)'
-    if (piId.includes('CASH'))         return 'Cash'
-    if (piId.includes('BANK'))         return 'Bank Transfer'
-    return 'Online (Stripe)'
+    if (!piId) return t('online')
+    if (piId.includes('CASH')) return t('cash_label')
+    if (piId.includes('BANK')) return t('bankTransfer_label')
+    return t('online')
   }
 
   const methodIcon = (piId: string | null) => {
@@ -957,16 +974,16 @@ function PaymentsTab({ app, payments }: { app: AppData; payments: PaymentRecord[
         <div className="px-5 py-4 border-b border-gray-50 bg-gray-50/60">
           <h3 className="font-bold text-brand-navy text-base flex items-center gap-2">
             <Banknote size={15} className="text-brand-red" />
-            Record Manual Payment
+            {t('recordManualPayment')}
           </h3>
-          <p className="text-xs text-gray-400 mt-0.5">Cash or bank transfer received outside of Stripe</p>
+          <p className="text-xs text-gray-400 mt-0.5">{t('recordManualPaymentDesc')}</p>
         </div>
 
         <form onSubmit={handleManualPayment} className="p-5 space-y-4">
           {/* Amount + Currency row */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-gray-500 mb-1.5">Amount</label>
+              <label className="block text-xs font-semibold text-gray-500 mb-1.5">{t('amount')}</label>
               <input
                 type="number"
                 min="0.01"
@@ -979,7 +996,7 @@ function PaymentsTab({ app, payments }: { app: AppData; payments: PaymentRecord[
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-gray-500 mb-1.5">Currency</label>
+              <label className="block text-xs font-semibold text-gray-500 mb-1.5">{t('currency')}</label>
               <select
                 value={currency}
                 onChange={e => setCurrency(e.target.value)}
@@ -994,12 +1011,12 @@ function PaymentsTab({ app, payments }: { app: AppData; payments: PaymentRecord[
 
           {/* Method */}
           <div>
-            <label className="block text-xs font-semibold text-gray-500 mb-2">Payment Method</label>
+            <label className="block text-xs font-semibold text-gray-500 mb-2">{t('paymentMethod')}</label>
             <div className="grid grid-cols-2 gap-2">
               {([
-                { value: 'cash',          label: 'Cash',          icon: Banknote },
-                { value: 'bank_transfer', label: 'Bank Transfer',  icon: Building2 },
-              ] as const).map(({ value, label, icon: Icon }) => (
+                { value: 'cash',          labelKey: 'cash',         icon: Banknote },
+                { value: 'bank_transfer', labelKey: 'bankTransfer', icon: Building2 },
+              ] as const).map(({ value, labelKey, icon: Icon }) => (
                 <button
                   key={value}
                   type="button"
@@ -1011,7 +1028,7 @@ function PaymentsTab({ app, payments }: { app: AppData; payments: PaymentRecord[
                   }`}
                 >
                   <Icon size={15} />
-                  {label}
+                  {t(labelKey)}
                 </button>
               ))}
             </div>
@@ -1030,8 +1047,8 @@ function PaymentsTab({ app, payments }: { app: AppData; payments: PaymentRecord[
               {advanceStatus && <CheckCircle size={12} className="text-white" />}
             </div>
             <div>
-              <p className="text-sm font-semibold text-brand-navy">Also mark application status as &ldquo;Paid&rdquo;</p>
-              <p className="text-xs text-gray-400">Updates the application pipeline status</p>
+              <p className="text-sm font-semibold text-brand-navy">{t('advanceStatusLabel')}</p>
+              <p className="text-xs text-gray-400">{t('advanceStatusDesc')}</p>
             </div>
           </label>
 
@@ -1051,10 +1068,10 @@ function PaymentsTab({ app, payments }: { app: AppData; payments: PaymentRecord[
             }`}
           >
             {saving
-              ? <><Loader2 size={14} className="animate-spin" /> Saving…</>
+              ? <><Loader2 size={14} className="animate-spin" /> {t('saving')}</>
               : saved
-                ? <><CheckCircle size={14} /> Payment recorded!</>
-                : <><Banknote size={14} /> Record Payment</>
+                ? <><CheckCircle size={14} /> {t('paymentRecorded')}</>
+                : <><Banknote size={14} /> {t('recordPayment')}</>
             }
           </button>
         </form>
@@ -1065,14 +1082,14 @@ function PaymentsTab({ app, payments }: { app: AppData; payments: PaymentRecord[
         <div className="px-5 py-4 border-b border-gray-50 bg-gray-50/60">
           <h3 className="font-bold text-brand-navy text-base flex items-center gap-2">
             <CreditCard size={15} className="text-gray-500" />
-            Payment History
+            {t('paymentHistory')}
           </h3>
         </div>
 
         {payments.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-10 gap-2">
             <CreditCard size={28} className="text-gray-200" />
-            <p className="text-gray-400 text-sm">No payments recorded</p>
+            <p className="text-gray-400 text-sm">{t('noPayments')}</p>
           </div>
         ) : (
           <div className="divide-y divide-gray-50">
@@ -1090,7 +1107,7 @@ function PaymentsTab({ app, payments }: { app: AppData; payments: PaymentRecord[
                     <div>
                       <p className="text-sm font-semibold text-brand-navy">
                         {methodLabel(pmt.stripe_payment_intent_id)}
-                        {isManual && <span className="ml-2 text-[10px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded font-normal">manual</span>}
+                        {isManual && <span className="ml-2 text-[10px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded font-normal">{t('manual')}</span>}
                       </p>
                       <p className="text-xs text-gray-400">
                         {pmt.paid_at ? fmtDate(pmt.paid_at) : fmtDate(pmt.created_at)}
@@ -1118,12 +1135,12 @@ function PaymentsTab({ app, payments }: { app: AppData; payments: PaymentRecord[
       <div className="border border-gray-100 rounded-xl p-5 space-y-4">
         <h3 className="font-bold text-brand-navy text-base flex items-center gap-2">
           <Banknote size={15} className="text-green-500" />
-          Tax Refund Amount
+          {t('taxRefundAmount')}
         </h3>
 
         {app.refund_amount ? (
           <div className="bg-green-50 border border-green-100 rounded-xl px-5 py-4 text-center">
-            <p className="text-xs text-green-600 font-semibold mb-1">Refund Amount</p>
+            <p className="text-xs text-green-600 font-semibold mb-1">{t('refundAmount')}</p>
             <p className="text-3xl font-black text-green-700">
               €{Number(app.refund_amount).toLocaleString('de-DE', { minimumFractionDigits: 2 })}
             </p>
@@ -1131,12 +1148,12 @@ function PaymentsTab({ app, payments }: { app: AppData; payments: PaymentRecord[
         ) : (
           <div className="flex items-center gap-2 text-sm text-gray-400 bg-gray-50 rounded-lg px-4 py-3">
             <Banknote size={14} className="text-gray-300 shrink-0" />
-            Refund not yet determined
+            {t('refundNotDetermined')}
           </div>
         )}
 
         <div>
-          <label className="block text-xs font-semibold text-gray-500 mb-2">Set / Update Refund Amount (€)</label>
+          <label className="block text-xs font-semibold text-gray-500 mb-2">{t('setUpdateRefund')}</label>
           <div className="flex gap-2">
             <input
               type="number"
@@ -1154,7 +1171,7 @@ function PaymentsTab({ app, payments }: { app: AppData; payments: PaymentRecord[
                 savedRefund ? 'bg-green-500 text-white' : 'bg-brand-red text-white hover:bg-red-500'
               }`}
             >
-              {savingRefund ? '…' : savedRefund ? 'Saved!' : 'Update'}
+              {savingRefund ? '…' : savedRefund ? t('saved') : t('update')}
             </button>
           </div>
         </div>

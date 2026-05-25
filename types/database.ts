@@ -159,6 +159,7 @@ export type Database = {
           country: string
           status: ApplicationStatus
           payment_status: PaymentStatus
+          refund_amount: number | null
           utm_source: string | null
           utm_medium: string | null
           utm_campaign: string | null
@@ -175,6 +176,7 @@ export type Database = {
           country?: string
           status?: ApplicationStatus
           payment_status?: PaymentStatus
+          refund_amount?: number | null
           utm_source?: string | null
           utm_medium?: string | null
           utm_campaign?: string | null
@@ -185,6 +187,7 @@ export type Database = {
           country?: string
           status?: ApplicationStatus
           payment_status?: PaymentStatus
+          refund_amount?: number | null
           utm_source?: string | null
           utm_medium?: string | null
           utm_campaign?: string | null

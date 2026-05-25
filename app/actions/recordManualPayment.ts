@@ -38,9 +38,11 @@ export async function recordManualPayment(
   })
 
   // Update application payment_status (and optionally status)
-  const updates: Record<string, unknown> = { payment_status: 'paid' }
-  if (alsoAdvanceStatus) updates.status = 'paid'
-  await supabase.from('applications').update(updates).eq('id', applicationId)
+  if (alsoAdvanceStatus) {
+    await supabase.from('applications').update({ payment_status: 'paid', status: 'paid' }).eq('id', applicationId)
+  } else {
+    await supabase.from('applications').update({ payment_status: 'paid' }).eq('id', applicationId)
+  }
 
   // Log status change when advancing
   if (alsoAdvanceStatus && currentApp && currentApp.status !== 'paid') {
