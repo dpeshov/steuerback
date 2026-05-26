@@ -299,7 +299,7 @@ export default function ApplicationTabs({
           </div>
           <button
             onClick={handleSendToFinanzamt}
-            disabled={isPending || app.status === 'submitted'}
+            disabled={isPending}
             className="flex items-center gap-2 bg-teal-600 hover:bg-teal-700 active:bg-teal-800 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold text-sm px-5 py-2.5 rounded-xl transition-all shrink-0 shadow-sm"
           >
             {isPending ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}

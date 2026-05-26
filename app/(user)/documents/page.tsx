@@ -1,9 +1,10 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import {
   Upload, CheckCircle, Clock, XCircle, AlertCircle, FileText, ArrowRight,
-  RotateCcw, ExternalLink, Camera, FolderOpen, X,
+  RotateCcw, ExternalLink, Camera, FolderOpen, X, PenLine,
 } from 'lucide-react'
 import type { DocumentType } from '@/types/database'
 
@@ -45,6 +46,7 @@ export default function DocumentsPage() {
   const [error,       setError]       = useState<string | null>(null)
   // bottom sheet state
   const [sheet,       setSheet]       = useState<{ docType: DocType; doc?: UploadedDoc } | null>(null)
+  const router = useRouter()
 
   const fileRef   = useRef<HTMLInputElement>(null)
   const cameraRef = useRef<HTMLInputElement>(null)
@@ -225,7 +227,13 @@ export default function DocumentsPage() {
         docs={requiredDocs}
         documents={documents}
         uploading={uploading}
-        onRowClick={(docType, doc) => setSheet({ docType, doc })}
+        onRowClick={(docType, doc) => {
+          if (docType.type === 'power_of_attorney' && appId) {
+            router.push(`/sign/${appId}`)
+            return
+          }
+          setSheet({ docType, doc })
+        }}
         onOpen={openFile}
       />
 
@@ -386,11 +394,13 @@ function DocSection({
         {docs.map(docType => {
           const doc        = documents[docType.type]
           const statusInfo = doc ? STATUS_UI[doc.review_status as keyof typeof STATUS_UI] : null
-          const StatusIcon = statusInfo?.icon ?? FileText
           const isLoading  = uploading === docType.type
+          const isVollmacht = docType.type === 'power_of_attorney'
+
+          const StatusIcon = isVollmacht && !doc ? PenLine : (statusInfo?.icon ?? FileText)
 
           const circleClass = !doc
-            ? 'bg-gray-100 text-gray-300'
+            ? isVollmacht ? 'bg-brand-red/10 text-brand-red' : 'bg-gray-100 text-gray-300'
             : statusInfo ? `${statusInfo.bg} ${statusInfo.color}` : 'bg-gray-100 text-gray-300'
 
           return (
@@ -413,7 +423,9 @@ function DocSection({
                 <p className="text-sm font-semibold text-brand-navy leading-snug">{docType.label}</p>
                 {doc
                   ? <p className="text-[11px] text-gray-400 mt-0.5 truncate">📎 {doc.file_name}</p>
-                  : <p className="text-[11px] text-gray-400 mt-0.5">Tap to upload or photograph</p>
+                  : isVollmacht
+                    ? <p className="text-[11px] text-brand-red/70 mt-0.5 font-medium">Tap to sign digitally — no upload needed</p>
+                    : <p className="text-[11px] text-gray-400 mt-0.5">Tap to upload or photograph</p>
                 }
                 {doc?.admin_note && (
                   <p className="text-[11px] text-orange-600 mt-0.5 line-clamp-1">⚠ {doc.admin_note}</p>
@@ -424,7 +436,9 @@ function DocSection({
               <div className="flex items-center gap-2 shrink-0">
                 {statusInfo
                   ? <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full ${statusInfo.badgeClass}`}>{statusInfo.label}</span>
-                  : <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-red-50 text-brand-red">Missing</span>
+                  : isVollmacht
+                    ? <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-brand-red/10 text-brand-red">Sign Now</span>
+                    : <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-red-50 text-brand-red">Missing</span>
                 }
                 <div className="w-6 h-6 flex items-center justify-center text-gray-300">
                   <svg width="6" height="10" viewBox="0 0 6 10" fill="none"><path d="M1 1l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
