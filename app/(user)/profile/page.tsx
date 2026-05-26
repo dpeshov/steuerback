@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { CheckCircle, User, Briefcase, CreditCard, MapPin, ChevronRight } from 'lucide-react'
+import { CheckCircle, User, Briefcase, CreditCard, MapPin, ChevronRight, Plus } from 'lucide-react'
 
 type Section = 'personal' | 'address' | 'employment' | 'banking'
 
@@ -22,6 +22,7 @@ export default function ProfilePage() {
   const [active, setActive] = useState<Section>('personal')
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [showBankAddress, setShowBankAddress] = useState(false)
   const [form, setForm] = useState({
     first_name: '', last_name: '', date_of_birth: '', nationality: '', phone: '',
     country_of_residence: '', city: '', address: '',
@@ -29,6 +30,7 @@ export default function ProfilePage() {
     student_status: false, university: '',
     employer_name: '', work_start: '', work_end: '', gross_income_eur: '',
     bank_name: '', iban: '', swift_bic: '', bank_account_holder: '', bank_country: '',
+    bank_address: '',
   })
   const supabase = createClient()
 
@@ -52,7 +54,9 @@ export default function ProfilePage() {
           bank_name: data.bank_name ?? '', iban: data.iban ?? '',
           swift_bic: data.swift_bic ?? '', bank_account_holder: data.bank_account_holder ?? '',
           bank_country: data.bank_country ?? '',
+          bank_address: data.bank_address ?? '',
         }))
+        if (data.bank_address) setShowBankAddress(true)
       }
     }
     load()
@@ -285,6 +289,39 @@ export default function ProfilePage() {
                   <label className={lbl}>Bank name</label>
                   <input className={inp} value={form.bank_name} onChange={e => set('bank_name', e.target.value)} placeholder="Stopanska Banka" />
                 </div>
+
+                {/* Optional: bank address */}
+                {!showBankAddress ? (
+                  <button
+                    type="button"
+                    onClick={() => setShowBankAddress(true)}
+                    className="flex items-center gap-2 text-xs font-bold text-gray-400 hover:text-brand-red transition-colors group"
+                  >
+                    <span className="w-5 h-5 rounded-full border-2 border-dashed border-gray-200 group-hover:border-brand-red/40 flex items-center justify-center transition-colors">
+                      <Plus size={10} strokeWidth={3} />
+                    </span>
+                    Add bank address <span className="font-normal text-gray-300">(optional)</span>
+                  </button>
+                ) : (
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className={lbl}>Bank address <span className="text-gray-300 normal-case font-normal tracking-normal">optional</span></label>
+                      <button
+                        type="button"
+                        onClick={() => { setShowBankAddress(false); set('bank_address', '') }}
+                        className="text-[10px] text-gray-300 hover:text-red-400 font-semibold transition-colors"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                    <input
+                      className={inp}
+                      value={form.bank_address}
+                      onChange={e => set('bank_address', e.target.value)}
+                      placeholder="Ul. 11 Oktomvri 3, 1000 Skopje"
+                    />
+                  </div>
+                )}
               </>
             )}
           </div>
