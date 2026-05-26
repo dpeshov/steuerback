@@ -9,7 +9,7 @@ import {
   ArrowLeft, User, FileText, Clock, MessageSquare, CreditCard,
   Send, FileCheck, Banknote, AlertCircle, Download, Upload,
   Phone, Mail, MapPin, Calendar, Briefcase,
-  CheckCircle, XCircle, Plus, Loader2, Building2,
+  CheckCircle, XCircle, Plus, Loader2, Building2, Printer,
 } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
 import { updateApplicationStatus } from '@/app/actions/updateApplicationStatus'
@@ -245,6 +245,14 @@ export default function ApplicationTabs({
           >
             {isPending ? t('saving') : t('saveChanges')}
           </button>
+          <Link
+            href={`/admin/applications/${app.id}/print`}
+            target="_blank"
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-all"
+          >
+            <Printer size={13} />
+            Print
+          </Link>
         </div>
       </div>
 
