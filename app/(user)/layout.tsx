@@ -14,6 +14,22 @@ export default async function UserLayout({ children }: { children: React.ReactNo
   const { data: profile } = await supabase
     .from('profiles').select('first_name').eq('user_id', user.id).single()
 
+  // Unread messages: public notes NOT created by the current user, for their latest app
+  const { data: latestApp } = await supabase
+    .from('applications').select('id').eq('user_id', user.id)
+    .order('created_at', { ascending: false }).limit(1).maybeSingle()
+
+  let unreadCount = 0
+  if (latestApp) {
+    const { count } = await supabase
+      .from('notes')
+      .select('id', { count: 'exact', head: true })
+      .eq('application_id', latestApp.id)
+      .eq('is_public', true)
+      .neq('created_by', user.id)
+    unreadCount = count ?? 0
+  }
+
   return (
     <div className="min-h-screen bg-[#F4F5F7]">
       <UserNav user={user} firstName={profile?.first_name} />
@@ -44,7 +60,7 @@ export default async function UserLayout({ children }: { children: React.ReactNo
         </div>
       </main>
 
-      <MobileNav />
+      <MobileNav unreadMessages={unreadCount} />
     </div>
   )
 }

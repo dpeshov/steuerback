@@ -78,7 +78,8 @@ export default function ProfilePage() {
     setTimeout(() => setSaved(false), 2500)
   }
 
-  const inp = 'w-full bg-gray-50 border border-black/[0.07] hover:border-black/[0.12] focus:border-brand-red/50 focus:bg-white rounded-xl px-4 py-3.5 text-sm text-brand-navy outline-none transition-all duration-150 placeholder:text-gray-300'
+  // min-h-[44px] = Apple/Google minimum touch target
+  const inp = 'w-full min-h-[44px] bg-gray-50 border border-black/[0.07] hover:border-black/[0.12] focus:border-brand-red/50 focus:bg-white rounded-xl px-4 py-3 text-sm text-brand-navy outline-none transition-all duration-150 placeholder:text-gray-300'
   const lbl = 'block text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1.5'
 
   const activeSection = SECTIONS.find(s => s.id === active)!
@@ -177,7 +178,7 @@ export default function ProfilePage() {
                   </div>
                   <div>
                     <label className={lbl}>Number</label>
-                    <input className={inp} value={form.passport_number} onChange={e => set('passport_number', e.target.value)} placeholder="AB123456" />
+                    <input className={inp} inputMode="text" autoCapitalize="characters" value={form.passport_number} onChange={e => set('passport_number', e.target.value)} placeholder="AB123456" />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
@@ -195,7 +196,7 @@ export default function ProfilePage() {
                 </div>
                 <div>
                   <label className={lbl}>Tax ID (Steuer-ID) — optional</label>
-                  <input className={`${inp} font-mono`} value={form.tax_id} onChange={e => set('tax_id', e.target.value)} placeholder="12 345 678 901" />
+                  <input className={`${inp} font-mono`} inputMode="numeric" value={form.tax_id} onChange={e => set('tax_id', e.target.value)} placeholder="12 345 678 901" />
                 </div>
               </>
             )}
@@ -270,12 +271,12 @@ export default function ProfilePage() {
                 </div>
                 <div>
                   <label className={lbl}>IBAN</label>
-                  <input className={`${inp} font-mono tracking-wide`} value={form.iban} onChange={e => set('iban', e.target.value)} placeholder="MK07 1234 5678 9012 345" />
+                  <input className={`${inp} font-mono tracking-wide`} inputMode="text" autoCapitalize="characters" autoCorrect="off" spellCheck={false} value={form.iban} onChange={e => set('iban', e.target.value.toUpperCase())} placeholder="MK07 1234 5678 9012 345" />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className={lbl}>BIC / SWIFT</label>
-                    <input className={`${inp} font-mono`} value={form.swift_bic} onChange={e => set('swift_bic', e.target.value)} placeholder="STBKMK2X" />
+                    <input className={`${inp} font-mono`} inputMode="text" autoCapitalize="characters" autoCorrect="off" spellCheck={false} value={form.swift_bic} onChange={e => set('swift_bic', e.target.value.toUpperCase())} placeholder="STBKMK2X" />
                   </div>
                   <div>
                     <label className={lbl}>Bank country</label>
@@ -326,12 +327,14 @@ export default function ProfilePage() {
             )}
           </div>
 
-          {/* Actions */}
-          <div className="flex gap-2 mt-5">
+          {/* Actions — sticky on mobile */}
+          <div className="flex gap-2 mt-5 md:static fixed bottom-0 left-0 right-0 md:mx-0 md:mb-0 mx-0 z-30 md:z-auto bg-white md:bg-transparent md:shadow-none shadow-[0_-4px_24px_rgba(0,0,0,0.08)] md:border-none border-t border-gray-100 p-4 md:p-0"
+            style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}
+          >
             <button
               onClick={save}
               disabled={saving}
-              className={`flex-1 font-bold py-3.5 rounded-xl transition-all duration-150 text-sm flex items-center justify-center gap-2 active:scale-[0.98] ${
+              className={`flex-1 min-h-[48px] font-bold rounded-xl transition-all duration-150 text-sm flex items-center justify-center gap-2 active:scale-[0.98] ${
                 saved
                   ? 'bg-brand-success text-white'
                   : 'bg-brand-red hover:bg-red-500 active:bg-red-600 text-white hover:shadow-lg hover:shadow-brand-red/15 disabled:opacity-50'
@@ -343,12 +346,14 @@ export default function ProfilePage() {
             {sectionIndex < SECTIONS.length - 1 && (
               <button
                 onClick={goNext}
-                className="flex items-center gap-1.5 bg-gray-100 hover:bg-gray-200 active:bg-gray-300 text-brand-navy font-semibold px-4 py-3.5 rounded-xl text-sm transition-all active:scale-[0.98]"
+                className="min-h-[48px] flex items-center gap-1.5 bg-gray-100 hover:bg-gray-200 active:bg-gray-300 text-brand-navy font-semibold px-4 rounded-xl text-sm transition-all active:scale-[0.98]"
               >
                 Next <ChevronRight size={14} />
               </button>
             )}
           </div>
+          {/* Spacer so sticky bar doesn't overlap content on mobile */}
+          <div className="h-20 md:hidden" />
         </div>
       </div>
     </div>
