@@ -17,6 +17,7 @@ import { updateDocumentReview } from '@/app/actions/updateDocumentReview'
 import { addNote } from '@/app/actions/addNote'
 import { recordManualPayment } from '@/app/actions/recordManualPayment'
 import { uploadDocumentAsAdmin } from '@/app/actions/uploadDocumentAsAdmin'
+import { sendToFinanzamt } from '@/app/actions/sendToFinanzamt'
 import type { ApplicationStatus, DocumentReviewStatus } from '@/types/database'
 
 // ── Types ──────────────────────────────────────────────────────────────────
@@ -205,9 +206,16 @@ export default function ApplicationTabs({
   const quickActions = [
     { label: t('requestDocument'),    status: 'missing_documents'    as ApplicationStatus, icon: AlertCircle },
     { label: t('markDocsVerified'),   status: 'ready_for_submission' as ApplicationStatus, icon: FileCheck },
-    { label: t('submitToFinanzamt'),  status: 'submitted'            as ApplicationStatus, icon: Send },
     { label: t('markRefundPaid'),     status: 'completed'            as ApplicationStatus, icon: Banknote },
   ]
+
+  const handleSendToFinanzamt = () => {
+    if (!confirm('Submit this application to Finanzamt? This will set status to "Submitted" and notify the applicant by email.')) return
+    startTransition(async () => {
+      await sendToFinanzamt(app.id, app.status)
+      router.refresh()
+    })
+  }
 
   return (
     <div className="space-y-5">
@@ -276,6 +284,29 @@ export default function ApplicationTabs({
           </button>
         ))}
       </div>
+
+      {/* ── Send to Finanzamt banner (only when ready) ── */}
+      {(app.status === 'ready_for_submission' || app.status === 'paid' || app.status === 'in_review') && (
+        <div className="flex items-center justify-between gap-4 bg-teal-50 border border-teal-200 rounded-2xl px-5 py-4">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-teal-100 flex items-center justify-center shrink-0">
+              <Send size={16} className="text-teal-700" />
+            </div>
+            <div>
+              <div className="text-sm font-bold text-teal-900">Ready to submit to Finanzamt</div>
+              <div className="text-xs text-teal-600 mt-0.5">All documents verified and payment confirmed. You can now officially submit this return.</div>
+            </div>
+          </div>
+          <button
+            onClick={handleSendToFinanzamt}
+            disabled={isPending || app.status === 'submitted'}
+            className="flex items-center gap-2 bg-teal-600 hover:bg-teal-700 active:bg-teal-800 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold text-sm px-5 py-2.5 rounded-xl transition-all shrink-0 shadow-sm"
+          >
+            {isPending ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
+            Send to Finanzamt
+          </button>
+        </div>
+      )}
 
       {/* ── Tabs panel ── */}
       <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
