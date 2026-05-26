@@ -198,6 +198,26 @@ export function documentDeclinedEmail(
   }
 }
 
+export function newMessageEmail(email: string, preview: string, taxYear: number) {
+  const subject = `New message about your ${taxYear} tax return`
+  const short   = preview.length > 120 ? preview.slice(0, 120) + '…' : preview
+  return {
+    from: FROM,
+    to: email,
+    subject,
+    html: base(subject, `
+      ${badge('New message', '#1A1A2E')}
+      <br><br>
+      ${h1('Your advisor sent you a message')}
+      ${p(`You have a new message regarding your <strong>${taxYear}</strong> German tax return:`)}
+      <div style="background:#F8F9FA;border-left:3px solid #1A1A2E;padding:14px 16px;border-radius:6px;margin:16px 0">
+        <p style="margin:0;font-size:14px;color:#333;line-height:1.6;font-style:italic">${short}</p>
+      </div>
+      ${btn('View message', `${APP_URL}/messages`)}
+    `),
+  }
+}
+
 // ─── Sender ───────────────────────────────────────────────────────────────────
 
 export async function sendEmail(payload: { from: string; to: string; subject: string; html: string } | null) {

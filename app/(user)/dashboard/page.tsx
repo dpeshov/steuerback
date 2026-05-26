@@ -89,7 +89,7 @@ export default async function DashboardPage() {
             </p>
           </div>
           <Link
-            href="/my-applications"
+            href="/application"
             className="flex items-center gap-2 bg-brand-red hover:bg-red-500 active:scale-95 text-white font-bold text-sm px-4 py-2.5 rounded-xl transition-all shadow-sm shadow-brand-red/30 shrink-0"
           >
             <Plus size={14} strokeWidth={2.5} />

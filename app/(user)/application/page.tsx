@@ -1,8 +1,9 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
-import { ArrowRight, CheckCircle, FileText, Calendar, User } from 'lucide-react'
+import { ArrowRight, CheckCircle, FileText, Calendar, User, AlertCircle } from 'lucide-react'
 
 const TAX_YEARS = [2024, 2023, 2022, 2021, 2020, 2019]
 
@@ -14,26 +15,53 @@ const REQUIREMENTS = [
 ]
 
 export default function ApplicationPage() {
-  const [taxYear, setTaxYear] = useState<number | null>(null)
+  const searchParams   = useSearchParams()
+  const preselect      = Number(searchParams.get('year')) || null
+
+  const [taxYear,       setTaxYear]       = useState<number | null>(preselect)
   const [applicantName, setApplicantName] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
-  const router = useRouter()
+  const [loading,       setLoading]       = useState(false)
+  const [error,         setError]         = useState('')
+  const [takenYears,    setTakenYears]    = useState<number[]>([])
+
+  const router   = useRouter()
   const supabase = createClient()
+
+  // Load years the user already has applications for
+  useEffect(() => {
+    const loadTaken = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+      const { data } = await supabase
+        .from('applications').select('tax_year').eq('user_id', user.id)
+      setTakenYears((data ?? []).map(a => a.tax_year))
+    }
+    loadTaken()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // If preselected year is already taken, clear it
+  useEffect(() => {
+    if (preselect && takenYears.includes(preselect)) setTaxYear(null)
+  }, [preselect, takenYears])
 
   const handleStart = async () => {
     if (!taxYear) return
+    if (takenYears.includes(taxYear)) {
+      setError(`You already have an application for ${taxYear}. Go to My Applications to view it.`)
+      return
+    }
     setLoading(true)
     setError('')
     const { data: { user } } = await supabase.auth.getUser()
-    const { error } = await supabase.from('applications').insert({
+    const { error: insertErr } = await supabase.from('applications').insert({
       user_id: user!.id,
       tax_year: taxYear,
       status: 'draft',
       applicant_name: applicantName.trim() || null,
     })
-    if (error) {
-      setError(error.message)
+    if (insertErr) {
+      setError(insertErr.message)
       setLoading(false)
       return
     }
@@ -79,19 +107,27 @@ export default function ApplicationPage() {
           <div className="grid grid-cols-3 gap-2 mb-5">
             {TAX_YEARS.map(year => {
               const selected = taxYear === year
+              const taken    = takenYears.includes(year)
               return (
                 <button
                   key={year}
-                  onClick={() => setTaxYear(year)}
+                  onClick={() => { if (!taken) setTaxYear(year) }}
+                  disabled={taken}
+                  title={taken ? 'You already have an application for this year' : undefined}
                   className={`relative py-4 rounded-xl font-black text-lg transition-all duration-150 active:scale-[0.96] ${
-                    selected
-                      ? 'bg-brand-navy text-white shadow-lg shadow-brand-navy/20'
-                      : 'bg-gray-50 text-brand-navy hover:bg-gray-100 active:bg-gray-200 border border-black/[0.06]'
+                    taken
+                      ? 'bg-gray-50 text-gray-200 cursor-not-allowed'
+                      : selected
+                        ? 'bg-brand-navy text-white shadow-lg shadow-brand-navy/20'
+                        : 'bg-gray-50 text-brand-navy hover:bg-gray-100 active:bg-gray-200 border border-black/[0.06]'
                   }`}
                 >
                   {year}
-                  {selected && (
+                  {selected && !taken && (
                     <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-brand-red rounded-full" />
+                  )}
+                  {taken && (
+                    <span className="absolute top-1.5 right-1.5 text-[8px] font-bold text-gray-300 bg-gray-100 px-1 rounded">✓</span>
                   )}
                 </button>
               )
@@ -116,7 +152,8 @@ export default function ApplicationPage() {
         </div>
 
         {error && (
-          <div className="mx-5 mb-4 bg-red-50 border border-red-100 text-brand-red text-sm px-4 py-3 rounded-xl font-medium">
+          <div className="mx-5 mb-4 bg-red-50 border border-red-100 text-brand-red text-sm px-4 py-3 rounded-xl font-medium flex items-start gap-2">
+            <AlertCircle size={14} className="shrink-0 mt-0.5" />
             {error}
           </div>
         )}
@@ -124,7 +161,7 @@ export default function ApplicationPage() {
         <div className="px-5 pb-5">
           <button
             onClick={handleStart}
-            disabled={!taxYear || loading}
+            disabled={!taxYear || loading || (!!taxYear && takenYears.includes(taxYear))}
             className="w-full bg-brand-red hover:bg-red-500 active:bg-red-600 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold py-4 rounded-xl transition-all duration-150 hover:shadow-xl hover:shadow-brand-red/15 flex items-center justify-center gap-2 text-sm"
           >
             {loading

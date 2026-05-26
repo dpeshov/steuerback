@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import {
   User, Lock, Bell, Globe, Trash2, CheckCircle, ChevronRight,
-  Mail, Phone, Shield, Eye, EyeOff, AlertTriangle, Loader2,
+  Mail, Phone, Shield, AlertTriangle, Loader2,
 } from 'lucide-react'
 import { deleteAccount } from '@/app/actions/deleteAccount'
 import LanguageSwitcher from '@/components/LanguageSwitcher'
@@ -33,6 +33,7 @@ export default function SettingsPage() {
   const [emailNotif,   setEmailNotif]   = useState(true)
   const [statusNotif,  setStatusNotif]  = useState(true)
   const [msgNotif,     setMsgNotif]     = useState(true)
+  const [savingNotif,  setSavingNotif]  = useState(false)
 
   const [deleteInput,  setDeleteInput]  = useState('')
   const [showDelete,   setShowDelete]   = useState(false)
@@ -51,6 +52,11 @@ export default function SettingsPage() {
         setLastName(data.last_name  ?? '')
         setPhone(data.phone         ?? '')
       }
+      // Load notification prefs from user metadata
+      const meta = user.user_metadata ?? {}
+      if (typeof meta.notif_status    === 'boolean') setStatusNotif(meta.notif_status)
+      if (typeof meta.notif_messages  === 'boolean') setMsgNotif(meta.notif_messages)
+      if (typeof meta.notif_newsletter=== 'boolean') setEmailNotif(meta.notif_newsletter)
     }
     load()
   }, [supabase])
@@ -76,6 +82,12 @@ export default function SettingsPage() {
     setResetting(false)
     setResetSent(true)
     setTimeout(() => setResetSent(false), 5000)
+  }
+
+  const saveNotifPrefs = async (prefs: { notif_status: boolean; notif_messages: boolean; notif_newsletter: boolean }) => {
+    setSavingNotif(true)
+    await supabase.auth.updateUser({ data: prefs })
+    setSavingNotif(false)
   }
 
   const handleDelete = async () => {
@@ -276,9 +288,9 @@ export default function SettingsPage() {
 
               <div className="space-y-3">
                 {[
-                  { label: 'Status updates',   desc: 'When your application status changes', on: statusNotif, toggle: () => setStatusNotif(v => !v) },
-                  { label: 'New messages',      desc: 'When our team sends you a message',    on: msgNotif,    toggle: () => setMsgNotif(v => !v) },
-                  { label: 'Email newsletter',  desc: 'Tips, deadlines, and tax news',        on: emailNotif,  toggle: () => setEmailNotif(v => !v) },
+                  { label: 'Status updates',  desc: 'When your application status changes', on: statusNotif, toggle: () => { const v = !statusNotif; setStatusNotif(v); saveNotifPrefs({ notif_status: v,    notif_messages: msgNotif,    notif_newsletter: emailNotif }) } },
+                  { label: 'New messages',     desc: 'When our team sends you a message',    on: msgNotif,    toggle: () => { const v = !msgNotif;    setMsgNotif(v);    saveNotifPrefs({ notif_status: statusNotif, notif_messages: v,           notif_newsletter: emailNotif }) } },
+                  { label: 'Email newsletter', desc: 'Tips, deadlines, and tax news',        on: emailNotif,  toggle: () => { const v = !emailNotif;  setEmailNotif(v);  saveNotifPrefs({ notif_status: statusNotif, notif_messages: msgNotif,    notif_newsletter: v          }) } },
                 ].map(({ label, desc, on, toggle }) => (
                   <div key={label} className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl hover:bg-gray-100/70 transition-colors">
                     <div>
@@ -291,9 +303,11 @@ export default function SettingsPage() {
               </div>
 
               <div className="flex items-center gap-2 p-3.5 bg-blue-50 border border-blue-100 rounded-xl">
-                <Bell size={13} className="text-blue-500 shrink-0" />
+                {savingNotif
+                  ? <Loader2 size={13} className="text-blue-500 shrink-0 animate-spin" />
+                  : <Bell size={13} className="text-blue-500 shrink-0" />}
                 <p className="text-xs text-blue-700">
-                  Notification preferences are saved automatically.
+                  {savingNotif ? 'Saving preferences…' : 'Preferences saved automatically when you toggle.'}
                 </p>
               </div>
             </div>

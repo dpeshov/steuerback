@@ -85,6 +85,7 @@ export type Database = {
           swift_bic: string | null
           bank_account_holder: string | null
           bank_country: string | null
+          bank_address: string | null
           profile_complete: boolean
           updated_at: string
         }
@@ -116,6 +117,7 @@ export type Database = {
           swift_bic?: string | null
           bank_account_holder?: string | null
           bank_country?: string | null
+          bank_address?: string | null
           profile_complete?: boolean
           updated_at?: string
         }
@@ -145,6 +147,7 @@ export type Database = {
           swift_bic?: string | null
           bank_account_holder?: string | null
           bank_country?: string | null
+          bank_address?: string | null
           profile_complete?: boolean
           updated_at?: string
         }
