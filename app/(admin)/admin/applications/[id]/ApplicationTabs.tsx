@@ -63,8 +63,11 @@ type DocData = {
   document_type: string
   file_name: string
   file_path: string
+  mime_type: string
+  file_size: number
   review_status: DocumentReviewStatus
   admin_note: string | null
+  reviewed_at: string | null
   created_at: string
 }
 

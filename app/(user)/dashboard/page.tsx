@@ -7,6 +7,8 @@ import {
   ShieldCheck, Star,
 } from 'lucide-react'
 import type { ApplicationStatus } from '@/types/database'
+import OnboardingChecklist, { type ChecklistStep } from './OnboardingChecklist'
+import WelcomeModal from './WelcomeModal'
 
 // ── Status config ────────────────────────────────────────────────────────────
 const STATUS_LABEL: Record<ApplicationStatus, string> = {
@@ -194,8 +196,68 @@ export default async function DashboardPage() {
     ? `TR-${latestActive.tax_year}-${latestActive.id.slice(0, 5).toUpperCase()}`
     : null
 
+  // ── Onboarding checklist steps ────────────────────────────────────────────
+  const hasPaid = applications?.some(a =>
+    ['paid', 'in_review', 'missing_documents', 'ready_for_submission', 'submitted', 'completed']
+      .includes(a.status)
+  ) ?? false
+
+  const checklistSteps: ChecklistStep[] = [
+    {
+      id:    'account',
+      label: 'Create your account',
+      desc:  'You\'re signed in and ready to go.',
+      href:  '/dashboard',
+      done:  true, // always done at this point
+    },
+    {
+      id:    'profile',
+      label: 'Complete your profile',
+      desc:  'Add personal details, employer info and bank IBAN.',
+      href:  '/profile',
+      done:  profPct >= 80,
+    },
+    {
+      id:    'application',
+      label: 'Start your application',
+      desc:  'Choose which tax year you want to claim.',
+      href:  '/application',
+      done:  (applications?.length ?? 0) > 0,
+    },
+    {
+      id:    'documents',
+      label: 'Upload required documents',
+      desc:  'Lohnsteuerbescheinigung, passport, Vollmacht.',
+      href:  '/documents',
+      done:  (documents?.length ?? 0) > 0,
+    },
+    {
+      id:    'vollmacht',
+      label: 'Sign the power of attorney',
+      desc:  'Authorize us to file your return with Finanzamt.',
+      href:  '/documents',
+      done:  hasVollmacht,
+    },
+    {
+      id:    'payment',
+      label: 'Choose your payment option',
+      desc:  'Pay now (€70) or from your refund (€150).',
+      href:  '/pay',
+      done:  hasPaid,
+    },
+  ]
+
+  // Only show checklist while user hasn't fully paid yet
+  const showChecklist = !hasPaid
+
   return (
     <div className="space-y-4">
+
+      {/* ── Welcome modal (first visit only, client-side) ─────────────────── */}
+      <WelcomeModal firstName={firstName} />
+
+      {/* ── Onboarding checklist (hidden after payment / when dismissed) ──── */}
+      {showChecklist && <OnboardingChecklist steps={checklistSteps} />}
 
       {/* ── Hero ─────────────────────────────────────────────────────────── */}
       <div className="relative bg-gradient-to-br from-brand-navy via-[#1e1e3a] to-[#1a1a30] rounded-2xl overflow-hidden p-5 text-white shadow-lg">

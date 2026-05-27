@@ -52,10 +52,20 @@ const config: Config = {
           from: { opacity: '0' },
           to:   { opacity: '1' },
         },
+        'draw': {
+          to: { strokeDashoffset: '0' },
+        },
+        'pop-in': {
+          '0%':   { transform: 'scale(0)', opacity: '0' },
+          '70%':  { transform: 'scale(1.1)' },
+          '100%': { transform: 'scale(1)', opacity: '1' },
+        },
       },
       animation: {
         'slide-up': 'slide-up 0.28s cubic-bezier(0.32,0.72,0,1)',
         'fade-in':  'fade-in 0.2s ease',
+        'draw':     'draw 0.5s 0.3s ease-out forwards',
+        'pop-in':   'pop-in 0.5s cubic-bezier(0.175,0.885,0.32,1.275) forwards',
       },
     },
   },

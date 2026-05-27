@@ -28,6 +28,7 @@ export default function Navbar() {
         <nav className="hidden md:flex items-center gap-1 text-sm">
           {[
             { href: '/how-it-works', label: 'How it works' },
+            { href: '/calculate',    label: 'Tax Calculator' },
             { href: '/pricing', label: 'Pricing' },
             { href: '/faq', label: 'FAQ' },
           ].map(({ href, label }) => (
@@ -55,6 +56,7 @@ export default function Navbar() {
         <div className="md:hidden bg-[#0D0D1A]/95 backdrop-blur-2xl border-t border-white/5 px-6 py-4 flex flex-col gap-1">
           {[
             { href: '/how-it-works', label: 'How it works' },
+            { href: '/calculate',    label: 'Tax Calculator' },
             { href: '/pricing', label: 'Pricing' },
             { href: '/faq', label: 'FAQ' },
             { href: '/login', label: 'Login' },

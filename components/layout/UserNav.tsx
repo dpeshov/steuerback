@@ -8,6 +8,8 @@ import {
   MessageSquare, Settings2, LogOut, ShieldCheck, Gift,
 } from 'lucide-react'
 import type { User as SupabaseUser } from '@supabase/supabase-js'
+import NotificationBell from './NotificationBell'
+import type { AppNotification } from '@/lib/notifications'
 
 const NAV = [
   { href: '/dashboard',       icon: LayoutDashboard, label: 'Dashboard' },
@@ -19,7 +21,17 @@ const NAV = [
   { href: '/settings',        icon: Settings2,       label: 'Settings' },
 ]
 
-export default function UserNav({ user, firstName }: { user: SupabaseUser; firstName?: string | null }) {
+export default function UserNav({
+  user,
+  firstName,
+  notifications = [],
+  notifUnread   = 0,
+}: {
+  user:          SupabaseUser
+  firstName?:    string | null
+  notifications?: AppNotification[]
+  notifUnread?:   number
+}) {
   const pathname = usePathname()
   const router   = useRouter()
   const supabase = createClient()
@@ -36,18 +48,21 @@ export default function UserNav({ user, firstName }: { user: SupabaseUser; first
 
   return (
     <aside className="hidden md:flex fixed left-0 top-0 bottom-0 w-[230px] bg-white border-r border-gray-100 flex-col z-40">
-      {/* Logo */}
+      {/* Logo + bell */}
       <div className="px-5 py-5 border-b border-gray-50">
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 bg-brand-red rounded-xl flex items-center justify-center shrink-0 shadow-sm shadow-brand-red/30">
-            <ShieldCheck size={15} className="text-white" strokeWidth={2.5} />
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 bg-brand-red rounded-xl flex items-center justify-center shrink-0 shadow-sm shadow-brand-red/30">
+              <ShieldCheck size={15} className="text-white" strokeWidth={2.5} />
+            </div>
+            <div>
+              <p className="font-black text-brand-navy text-sm leading-tight">
+                Steuer<span className="text-brand-red">Back</span>
+              </p>
+              <p className="text-[10px] text-gray-400 font-medium tracking-wide">Tax Refund Portal</p>
+            </div>
           </div>
-          <div>
-            <p className="font-black text-brand-navy text-sm leading-tight">
-              Steuer<span className="text-brand-red">Back</span>
-            </p>
-            <p className="text-[10px] text-gray-400 font-medium tracking-wide">Tax Refund Portal</p>
-          </div>
+          <NotificationBell notifications={notifications} unreadCount={notifUnread} />
         </div>
       </div>
 
