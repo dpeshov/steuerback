@@ -15,7 +15,7 @@ export default function Footer() {
           <div className="flex flex-col gap-2">
             <Link href="/how-it-works" className="hover:text-white transition-colors">How it works</Link>
             <Link href="/pricing" className="hover:text-white transition-colors">Pricing</Link>
-            <Link href="/documents" className="hover:text-white transition-colors">Documents</Link>
+            <Link href="/eligibility" className="hover:text-white transition-colors">Check eligibility</Link>
             <Link href="/faq" className="hover:text-white transition-colors">FAQ</Link>
           </div>
         </div>
@@ -24,7 +24,7 @@ export default function Footer() {
           <div className="flex flex-col gap-2">
             <Link href="/register" className="hover:text-white transition-colors">Create account</Link>
             <Link href="/login" className="hover:text-white transition-colors">Login</Link>
-            <Link href="/eligibility" className="hover:text-white transition-colors">Check eligibility</Link>
+            <Link href="/calculate" className="hover:text-white transition-colors">Tax calculator</Link>
           </div>
         </div>
         <div>
