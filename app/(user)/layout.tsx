@@ -21,12 +21,19 @@ export default async function UserLayout({ children }: { children: React.ReactNo
 
   let unreadCount = 0
   if (latestApp) {
-    const { count } = await supabase
+    // Only count messages newer than when the user last opened the Messages page
+    const lastRead: string | undefined = user.user_metadata?.messages_last_read
+
+    const q = supabase
       .from('notes')
       .select('id', { count: 'exact', head: true })
       .eq('application_id', latestApp.id)
       .eq('is_public', true)
       .neq('created_by', user.id)
+
+    if (lastRead) q.gt('created_at', lastRead)
+
+    const { count } = await q
     unreadCount = count ?? 0
   }
 

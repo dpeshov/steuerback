@@ -8,12 +8,13 @@ export default async function MessagesPage() {
   if (!user) redirect('/login')
 
   const { data: apps } = await supabase
-    .from('applications').select('id')
+    .from('applications').select('id, tax_year')
     .eq('user_id', user.id)
     .order('created_at', { ascending: false })
     .limit(1)
 
-  const appId = apps?.[0]?.id ?? null
+  const app   = apps?.[0] ?? null
+  const appId = app?.id ?? null
 
   const notes = appId
     ? (await supabase
@@ -27,6 +28,7 @@ export default async function MessagesPage() {
   return (
     <MessagesClient
       applicationId={appId}
+      taxYear={app?.tax_year ?? null}
       initialNotes={notes}
       userId={user.id}
     />
