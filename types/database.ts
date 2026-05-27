@@ -86,6 +86,7 @@ export type Database = {
           bank_account_holder: string | null
           bank_country: string | null
           bank_address: string | null
+          referral_code: string | null
           profile_complete: boolean
           updated_at: string
         }
@@ -118,6 +119,7 @@ export type Database = {
           bank_account_holder?: string | null
           bank_country?: string | null
           bank_address?: string | null
+          referral_code?: string | null
           profile_complete?: boolean
           updated_at?: string
         }
@@ -148,7 +150,37 @@ export type Database = {
           bank_account_holder?: string | null
           bank_country?: string | null
           bank_address?: string | null
+          referral_code?: string | null
           profile_complete?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      referrals: {
+        Row: {
+          id: string
+          referrer_id: string
+          referred_id: string
+          referred_email: string | null
+          status: 'registered' | 'applied' | 'paid' | 'completed'
+          reward_amount: number
+          reward_paid: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          referrer_id: string
+          referred_id: string
+          referred_email?: string | null
+          status?: 'registered' | 'applied' | 'paid' | 'completed'
+          reward_amount?: number
+          reward_paid?: boolean
+        }
+        Update: {
+          status?: 'registered' | 'applied' | 'paid' | 'completed'
+          reward_amount?: number
+          reward_paid?: boolean
           updated_at?: string
         }
         Relationships: []

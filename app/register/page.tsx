@@ -1,8 +1,9 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { ArrowRight, Eye, EyeOff, CheckCircle, Mail } from 'lucide-react'
+import { ArrowRight, Eye, EyeOff, CheckCircle, Mail, Gift } from 'lucide-react'
 
 export default function RegisterPage() {
   const [email, setEmail] = useState('')
@@ -13,6 +14,8 @@ export default function RegisterPage() {
   const [success, setSuccess] = useState(false)
   const [loading, setLoading] = useState(false)
   const supabase = createClient()
+  const searchParams = useSearchParams()
+  const refCode = searchParams.get('ref') ?? ''
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -23,7 +26,10 @@ export default function RegisterPage() {
     setLoading(true)
     const { error } = await supabase.auth.signUp({
       email, password,
-      options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
+      options: {
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
+        data: refCode ? { referred_by: refCode } : undefined,
+      },
     })
     if (error) { setError(error.message); setLoading(false) }
     else setSuccess(true)
@@ -75,6 +81,12 @@ export default function RegisterPage() {
         <div className="mb-6">
           <h1 className="text-xl font-black text-white tracking-tight">Create your account</h1>
           <p className="text-white/35 text-sm mt-1">Free to start. No commitment required.</p>
+          {refCode && (
+            <div className="flex items-center gap-2 mt-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl px-3 py-2">
+              <Gift size={13} className="text-emerald-400 shrink-0" />
+              <p className="text-xs text-emerald-300 font-medium">You were invited by a friend!</p>
+            </div>
+          )}
         </div>
 
         <form onSubmit={handleRegister} className="space-y-3">

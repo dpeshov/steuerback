@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import {
   LayoutDashboard, User, FolderOpen, FileText,
-  MessageSquare, Settings2, LogOut, ShieldCheck,
+  MessageSquare, Settings2, LogOut, ShieldCheck, Gift,
 } from 'lucide-react'
 import type { User as SupabaseUser } from '@supabase/supabase-js'
 
@@ -15,6 +15,7 @@ const NAV = [
   { href: '/my-applications', icon: FolderOpen,      label: 'My Applications' },
   { href: '/documents',       icon: FileText,        label: 'Documents' },
   { href: '/messages',        icon: MessageSquare,   label: 'Messages' },
+  { href: '/referrals',       icon: Gift,            label: 'Referrals' },
   { href: '/settings',        icon: Settings2,       label: 'Settings' },
 ]
 

@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 import { sendEmail, welcomeEmail } from '@/lib/email'
+import { recordReferral } from '@/app/actions/referral'
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
@@ -15,6 +16,12 @@ export async function GET(request: Request) {
       // Send welcome email on first confirmation
       if (data.user.email && data.user.email_confirmed_at) {
         await sendEmail(welcomeEmail(data.user.email))
+      }
+
+      // Record referral if the user signed up via a referral link
+      const referredBy = data.user.user_metadata?.referred_by as string | undefined
+      if (referredBy) {
+        await recordReferral(referredBy)
       }
 
       // Redirect based on role
