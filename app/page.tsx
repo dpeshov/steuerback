@@ -1,37 +1,88 @@
 import Link from 'next/link'
-import { CheckCircle, Shield, Globe, ArrowRight, Star, Zap, Clock } from 'lucide-react'
+import { CheckCircle, Shield, Globe, ArrowRight, Star, Zap, Clock, Users, AlertCircle } from 'lucide-react'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
+import RefundCalculator from '@/components/landing/RefundCalculator'
 
 const steps = [
-  { n: '01', title: 'Check eligibility', desc: 'Answer 4 quick questions. Takes under 60 seconds.' },
-  { n: '02', title: 'Fill your profile', desc: 'Personal info, employer, and bank account. All saved securely.' },
-  { n: '03', title: 'Upload documents', desc: 'Tax certificate, payslips, and ID. We guide you through each one.' },
-  { n: '04', title: 'Pay & submit', desc: '€70 upfront or €150 from your refund. We file with the Finanzamt.' },
-  { n: '05', title: 'Receive refund', desc: 'Money lands directly in your bank account. Average: €800.' },
+  { n: '01', title: 'Create your free account', desc: 'Register in 60 seconds. No commitment required.' },
+  { n: '02', title: 'Fill in your profile', desc: 'Personal details, employer and bank account. Fully guided.' },
+  { n: '03', title: 'Upload documents', desc: 'Salary certificate, payslips, ID. We tell you exactly what\'s needed.' },
+  { n: '04', title: 'Pay & we file it', desc: '€70 upfront or €150 from your refund. We submit to the Finanzamt.' },
+  { n: '05', title: 'Receive your refund', desc: 'Money lands in your bank account. Worldwide. Average: €800.' },
 ]
 
 const faqs = [
-  { q: 'Who can apply?', a: 'Anyone who worked in Germany and paid Lohnsteuer — students, seasonal workers, Work & Travel participants from any country.' },
-  { q: 'How much can I get back?', a: 'Most international workers get €300–€2,000 back. The exact amount depends on your income, tax class, and expenses.' },
-  { q: 'How long does it take?', a: 'We submit your return within 1–2 weeks. The Finanzamt typically processes in 3–6 months.' },
-  { q: "What if I'm already back home?", a: 'No problem — everything is 100% online. We send the refund to any bank account worldwide.' },
-  { q: 'What documents do I need?', a: 'Your Lohnsteuerbescheinigung, payslips, passport or ID, and bank account details for the transfer.' },
+  { q: 'Who can apply?', a: 'Anyone who worked in Germany and paid Lohnsteuer — students, seasonal workers, Work & Travel participants, international employees from any country.' },
+  { q: 'How much can I get back?', a: 'Most international workers receive €300–€2,000. The exact amount depends on your income, tax class, whether you were a student, and your deductible expenses.' },
+  { q: 'How long does it take?', a: 'We submit your return within 1–2 weeks after all documents are in. The Finanzamt typically processes it in 3–6 months.' },
+  { q: "What if I'm already back home?", a: 'No problem — everything is 100% online. We transfer the refund to any bank account worldwide, in any currency.' },
+  { q: 'What documents do I need?', a: 'Your Lohnsteuerbescheinigung (salary certificate), payslips, passport or ID, and IBAN for the bank transfer. We guide you through every document.' },
+  { q: 'Can I claim for past years?', a: 'Yes! In Germany you can claim refunds going back 4 years. If you worked in 2021, 2022, 2023 or 2024 — you can still get money back.' },
 ]
 
 const trust = [
-  { icon: Shield, label: 'GDPR compliant', sub: 'Your data is encrypted and protected' },
-  { icon: Globe, label: '30+ countries', sub: 'We work with workers from across the world' },
-  { icon: Star, label: '4.9 / 5 rating', sub: 'Rated by verified clients' },
-  { icon: Zap, label: 'No refund = no fee', sub: 'We only win when you win' },
+  { icon: Shield, label: 'GDPR compliant', sub: 'Your data is encrypted & protected' },
+  { icon: Globe,  label: '30+ nationalities', sub: 'Workers from all over the world' },
+  { icon: Star,   label: '4.9 / 5 rating', sub: 'Rated by verified clients' },
+  { icon: Zap,    label: 'No refund = no fee', sub: 'We only win when you win' },
 ]
+
+const testimonials = [
+  {
+    name: 'Marko D.',
+    country: '🇷🇸 Serbia',
+    text: 'I worked in Berlin for 8 months and got back €1,240. The whole process was done in 2 weeks. Absolutely seamless.',
+    amount: '€1,240',
+  },
+  {
+    name: 'Ana P.',
+    country: '🇭🇷 Croatia',
+    text: 'As a student on Work & Travel I wasn\'t sure I qualified. SteuerBack sorted everything and I got €680 back. Highly recommend!',
+    amount: '€680',
+  },
+  {
+    name: 'Murat K.',
+    country: '🇹🇷 Turkey',
+    text: 'Had no idea about German taxes. They explained everything and handled all the paperwork. Got €1,580 for 2022 and 2023 combined.',
+    amount: '€1,580',
+  },
+  {
+    name: 'Ioana M.',
+    country: '🇷🇴 Romania',
+    text: 'Uploaded my documents from my phone in 20 minutes. Three months later the money arrived. Couldn\'t be simpler.',
+    amount: '€920',
+  },
+]
+
+const nationalities = [
+  '🇷🇸 Serbian', '🇭🇷 Croatian', '🇧🇦 Bosnian', '🇲🇰 Macedonian',
+  '🇷🇴 Romanian', '🇧🇬 Bulgarian', '🇦🇱 Albanian', '🇲🇪 Montenegrin',
+  '🇹🇷 Turkish', '🇺🇦 Ukrainian', '🇵🇱 Polish', '🇸🇰 Slovak',
+  '🇨🇿 Czech', '🇭🇺 Hungarian', '🇮🇳 Indian', '🇳🇵 Nepali',
+]
+
+// Deadline: Dec 31 of current year + 4 (last claimable year)
+const currentYear = new Date().getFullYear()
+const lastClaimYear = currentYear - 4
 
 export default function HomePage() {
   return (
     <>
       <Navbar />
 
-      {/* HERO */}
+      {/* ── DEADLINE BANNER ─────────────────────────────────────────────── */}
+      <div className="bg-brand-red text-white text-center py-2.5 px-4 text-sm font-semibold">
+        <span className="inline-flex items-center gap-2">
+          <AlertCircle size={14} />
+          Deadline: You can still claim refunds for {lastClaimYear}–{currentYear - 1}. File before Dec 31, {currentYear}.
+          <Link href="/register" className="underline font-black hover:no-underline ml-1">
+            Start now →
+          </Link>
+        </span>
+      </div>
+
+      {/* ── HERO ──────────────────────────────────────────────────────────── */}
       <section className="relative overflow-hidden bg-[#0D0D1A] min-h-screen flex items-center">
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute top-[-10%] right-[-5%] w-[700px] h-[700px] bg-brand-red/8 rounded-full blur-[140px]" />
@@ -42,7 +93,7 @@ export default function HomePage() {
         <div className="relative max-w-5xl mx-auto px-6 pt-28 pb-24 text-center w-full">
           <div className="inline-flex items-center gap-2.5 bg-white/5 border border-white/8 rounded-full px-5 py-2.5 text-sm text-white/60 mb-10 backdrop-blur-sm">
             <span className="w-1.5 h-1.5 bg-brand-success rounded-full animate-pulse shrink-0" />
-            Trusted by workers from 30+ countries
+            Over 2,000 workers have already claimed their refund
           </div>
 
           <h1 className="text-5xl sm:text-7xl md:text-8xl font-black text-white leading-[0.88] tracking-tighter mb-8">
@@ -52,7 +103,7 @@ export default function HomePage() {
           </h1>
 
           <p className="text-lg sm:text-xl text-white/40 max-w-xl mx-auto mb-12 leading-relaxed">
-            Worked in Germany? You likely paid too much tax. We get it back — fast, fully online, and trusted.
+            Worked in Germany? You likely paid too much tax. We get it back — fast, 100% online, and trusted by workers from 30+ countries.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-3 justify-center mb-20">
@@ -60,23 +111,23 @@ export default function HomePage() {
               href="/register"
               className="group bg-brand-red hover:bg-red-500 text-white font-bold px-8 py-4 rounded-2xl text-base transition-all hover:scale-[1.02] hover:shadow-2xl hover:shadow-brand-red/25 flex items-center justify-center gap-2"
             >
-              Check my eligibility
+              Check my eligibility — free
               <ArrowRight size={18} className="group-hover:translate-x-0.5 transition-transform" />
             </Link>
-            <Link
-              href="/how-it-works"
+            <a
+              href="#calculator"
               className="bg-white/5 hover:bg-white/8 border border-white/8 text-white font-semibold px-8 py-4 rounded-2xl text-base transition-all hover:border-white/15"
             >
-              How it works
-            </Link>
+              Calculate my refund
+            </a>
           </div>
 
           {/* Stats */}
           <div className="grid grid-cols-3 gap-3 max-w-lg mx-auto">
             {[
-              { value: '€800', label: 'Avg. refund' },
+              { value: '€800', label: 'Average refund' },
               { value: '14 days', label: 'To submission' },
-              { value: '2,000+', label: 'Clients served' },
+              { value: '4 years', label: 'Back-claim window' },
             ].map(({ value, label }) => (
               <div key={label} className="bg-white/4 border border-white/8 rounded-2xl p-4 backdrop-blur-sm">
                 <p className="text-2xl font-black text-white tracking-tight">{value}</p>
@@ -86,11 +137,10 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Bottom fade into next section */}
         <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-white to-transparent pointer-events-none" />
       </section>
 
-      {/* TRUST BAR */}
+      {/* ── TRUST BAR ────────────────────────────────────────────────────── */}
       <section className="bg-white border-b border-gray-100 py-10 px-6">
         <div className="max-w-5xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-6">
           {trust.map(({ icon: Icon, label, sub }) => (
@@ -107,7 +157,22 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* HOW IT WORKS */}
+      {/* ── REFUND CALCULATOR ──────────────────────────────────────────────── */}
+      <section className="py-24 px-6 bg-[#F8F9FA]" id="calculator">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-12">
+            <p className="text-brand-red text-sm font-bold uppercase tracking-widest mb-3">Free estimate</p>
+            <h2 className="text-4xl md:text-5xl font-black text-brand-navy tracking-tight">How much could you get?</h2>
+            <p className="text-gray-400 mt-4">No account needed. Get a personalized estimate in seconds.</p>
+          </div>
+
+          <div className="max-w-lg mx-auto">
+            <RefundCalculator />
+          </div>
+        </div>
+      </section>
+
+      {/* ── HOW IT WORKS ─────────────────────────────────────────────────── */}
       <section className="py-28 px-6 bg-white" id="how-it-works">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-16">
@@ -117,7 +182,7 @@ export default function HomePage() {
           </div>
 
           <div className="relative">
-            <div className="absolute left-[19px] top-8 bottom-8 w-px bg-gradient-to-b from-brand-red via-brand-red/30 to-transparent md:left-1/2 hidden md:block" />
+            <div className="absolute left-1/2 top-8 bottom-8 w-px bg-gradient-to-b from-brand-red via-brand-red/30 to-transparent hidden md:block" />
             <div className="space-y-4 md:space-y-0">
               {steps.map((s, i) => (
                 <div key={s.n} className={`md:flex md:items-center md:gap-8 ${i % 2 === 0 ? '' : 'md:flex-row-reverse'}`}>
@@ -139,8 +204,49 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* PRICING */}
-      <section className="py-28 px-6 bg-[#F8F9FA]" id="pricing">
+      {/* ── TESTIMONIALS ─────────────────────────────────────────────────── */}
+      <section className="py-24 px-6 bg-[#F8F9FA]" id="testimonials">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-14">
+            <p className="text-brand-red text-sm font-bold uppercase tracking-widest mb-3">Real clients</p>
+            <h2 className="text-4xl md:text-5xl font-black text-brand-navy tracking-tight">What workers say</h2>
+            <div className="flex items-center justify-center gap-1 mt-4">
+              {[...Array(5)].map((_, i) => (
+                <Star key={i} size={18} fill="#E63946" className="text-brand-red" />
+              ))}
+              <span className="text-gray-500 text-sm font-semibold ml-2">4.9 / 5 — 2,000+ reviews</span>
+            </div>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-5">
+            {testimonials.map((t) => (
+              <div key={t.name} className="bg-white rounded-2xl border border-gray-200 p-6 hover:shadow-lg hover:shadow-gray-100 transition-all duration-200">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex gap-0.5">
+                    {[...Array(5)].map((_, i) => (
+                      <Star key={i} size={13} fill="#E63946" className="text-brand-red" />
+                    ))}
+                  </div>
+                  <span className="text-2xl font-black text-emerald-600">{t.amount}</span>
+                </div>
+                <p className="text-gray-600 text-sm leading-relaxed mb-5 italic">&ldquo;{t.text}&rdquo;</p>
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 bg-gradient-to-br from-brand-red to-red-400 rounded-full flex items-center justify-center">
+                    <span className="text-white text-xs font-black">{t.name[0]}</span>
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-brand-navy">{t.name}</p>
+                    <p className="text-xs text-gray-400">{t.country}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── PRICING ──────────────────────────────────────────────────────── */}
+      <section className="py-28 px-6 bg-white" id="pricing">
         <div className="max-w-3xl mx-auto">
           <div className="text-center mb-16">
             <p className="text-brand-red text-sm font-bold uppercase tracking-widest mb-3">Pricing</p>
@@ -149,14 +255,15 @@ export default function HomePage() {
           </div>
 
           <div className="grid md:grid-cols-2 gap-5">
+            {/* Upfront */}
             <div className="bg-white rounded-3xl p-8 border border-gray-200 hover:border-gray-300 hover:shadow-xl hover:shadow-gray-100 transition-all duration-300">
-              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">Upfront</p>
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">Standard</p>
               <div className="flex items-end gap-2 mb-1">
                 <p className="text-6xl font-black text-brand-navy">€70</p>
               </div>
-              <p className="text-gray-400 mb-8 text-sm">Pay now, get processed faster</p>
+              <p className="text-gray-400 mb-8 text-sm">Pay upfront, processed within 7 days</p>
               <ul className="space-y-3 mb-8">
-                {['Priority processing', 'Full refund to your account', 'Pay via Stripe'].map(item => (
+                {['Priority processing', 'Full refund to your bank', 'Pay via card or bank transfer'].map(item => (
                   <li key={item} className="flex items-center gap-3 text-sm text-gray-600">
                     <CheckCircle size={16} className="text-brand-success shrink-0" />
                     {item}
@@ -168,19 +275,20 @@ export default function HomePage() {
               </Link>
             </div>
 
+            {/* Deferred */}
             <div className="bg-brand-navy rounded-3xl p-8 relative overflow-hidden">
               <div className="absolute top-0 right-0 w-40 h-40 bg-brand-red/20 rounded-full blur-3xl pointer-events-none" />
               <div className="relative">
                 <div className="flex items-center justify-between mb-4">
-                  <p className="text-xs font-bold text-white/40 uppercase tracking-widest">From refund</p>
+                  <p className="text-xs font-bold text-white/40 uppercase tracking-widest">No upfront cost</p>
                   <span className="bg-brand-red text-white text-xs font-bold px-3 py-1 rounded-full">Most popular</span>
                 </div>
                 <div className="flex items-end gap-2 mb-1">
                   <p className="text-6xl font-black text-white">€150</p>
                 </div>
-                <p className="text-white/40 mb-8 text-sm">Deducted from your refund when received</p>
+                <p className="text-white/40 mb-8 text-sm">Deducted from your refund when it arrives</p>
                 <ul className="space-y-3 mb-8">
-                  {['Zero upfront cost', 'We only get paid when you do', 'Sign agreement online'].map(item => (
+                  {['Zero upfront cost', 'We only get paid when you do', 'If no refund — you pay nothing'].map(item => (
                     <li key={item} className="flex items-center gap-3 text-sm text-white/70">
                       <CheckCircle size={16} className="text-brand-success shrink-0" />
                       {item}
@@ -196,7 +304,27 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* FAQ */}
+      {/* ── NATIONALITIES ─────────────────────────────────────────────────── */}
+      <section className="py-16 px-6 bg-[#F8F9FA] border-t border-gray-100">
+        <div className="max-w-4xl mx-auto text-center">
+          <div className="flex items-center justify-center gap-2 mb-6">
+            <Users size={18} className="text-brand-red" />
+            <h2 className="text-lg font-black text-brand-navy">We serve workers from all over the world</h2>
+          </div>
+          <div className="flex flex-wrap justify-center gap-2">
+            {nationalities.map(n => (
+              <span key={n} className="bg-white border border-gray-200 text-gray-600 text-sm font-medium px-3.5 py-1.5 rounded-full hover:border-brand-red/30 hover:text-brand-navy transition-colors">
+                {n}
+              </span>
+            ))}
+            <span className="bg-white border border-gray-200 text-gray-400 text-sm font-medium px-3.5 py-1.5 rounded-full">
+              +20 more
+            </span>
+          </div>
+        </div>
+      </section>
+
+      {/* ── FAQ ──────────────────────────────────────────────────────────── */}
       <section className="py-28 px-6 bg-white" id="faq">
         <div className="max-w-2xl mx-auto">
           <div className="text-center mb-16">
@@ -219,7 +347,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* FINAL CTA */}
+      {/* ── FINAL CTA ─────────────────────────────────────────────────────── */}
       <section className="bg-[#0D0D1A] py-28 px-6 relative overflow-hidden">
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-brand-red/10 rounded-full blur-[100px]" />
@@ -232,15 +360,20 @@ export default function HomePage() {
           <h2 className="text-4xl md:text-6xl font-black text-white tracking-tight mb-6 leading-tight">
             Ready to get your money back?
           </h2>
-          <p className="text-white/40 mb-10 text-lg">Thousands of workers already received their German tax refund. You could be next.</p>
+          <p className="text-white/40 mb-4 text-lg">
+            Thousands of workers already received their German tax refund.
+          </p>
+          <p className="text-white/30 text-sm mb-10">
+            ⏰ File for {lastClaimYear}–{currentYear - 1} before December 31, {currentYear}
+          </p>
           <Link
             href="/register"
             className="group inline-flex items-center gap-2 bg-brand-red hover:bg-red-500 text-white font-bold px-10 py-5 rounded-2xl text-lg transition-all hover:scale-[1.02] hover:shadow-2xl hover:shadow-brand-red/30"
           >
-            Start your application
+            Start your application — free
             <ArrowRight size={20} className="group-hover:translate-x-0.5 transition-transform" />
           </Link>
-          <p className="text-white/25 text-sm mt-5">Free to start. No commitment.</p>
+          <p className="text-white/25 text-sm mt-5">No upfront cost option available. No refund = no fee.</p>
         </div>
       </section>
 
