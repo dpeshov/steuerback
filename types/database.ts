@@ -398,6 +398,54 @@ export type Database = {
         }
         Relationships: []
       }
+      employments: {
+        Row: {
+          id: string
+          user_id: string
+          employer_name: string
+          city: string | null
+          work_start: string | null
+          work_end: string | null
+          gross_income_eur: number | null
+          tax_year: number | null
+          student_status: boolean
+          university: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          employer_name: string
+          city?: string | null
+          work_start?: string | null
+          work_end?: string | null
+          gross_income_eur?: number | null
+          tax_year?: number | null
+          student_status?: boolean
+          university?: string | null
+        }
+        Update: {
+          employer_name?: string
+          city?: string | null
+          work_start?: string | null
+          work_end?: string | null
+          gross_income_eur?: number | null
+          tax_year?: number | null
+          student_status?: boolean
+          university?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       leads: {
         Row: {
           id: string

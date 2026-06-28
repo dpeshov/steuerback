@@ -1,9 +1,29 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { CheckCircle, User, Briefcase, CreditCard, MapPin, ChevronRight, Plus } from 'lucide-react'
+import { CheckCircle, User, Briefcase, CreditCard, MapPin, ChevronRight, Plus, Trash2, ChevronDown, ChevronUp } from 'lucide-react'
 
 type Section = 'personal' | 'address' | 'employment' | 'banking'
+
+type Employment = {
+  id?: string
+  employer_name: string
+  city: string
+  work_start: string
+  work_end: string
+  gross_income_eur: string
+  tax_year: string
+  student_status: boolean
+  university: string
+}
+
+const emptyEmployment = (): Employment => ({
+  employer_name: '', city: '', work_start: '', work_end: '',
+  gross_income_eur: '', tax_year: '', student_status: false, university: '',
+})
+
+const currentYear = new Date().getFullYear()
+const TAX_YEAR_OPTIONS = Array.from({ length: 5 }, (_, i) => currentYear - i)
 
 const SECTIONS: { id: Section; label: string; icon: React.ElementType; desc: string }[] = [
   { id: 'personal', label: 'Personal', icon: User, desc: 'Name & documents' },
@@ -23,6 +43,8 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [showBankAddress, setShowBankAddress] = useState(false)
+  const [employments, setEmployments] = useState<Employment[]>([])
+  const [expandedEmp, setExpandedEmp] = useState<number | null>(null)
   const [form, setForm] = useState({
     first_name: '', last_name: '', date_of_birth: '', nationality: '', phone: '',
     country_of_residence: '', city: '', address: '',
@@ -58,6 +80,27 @@ export default function ProfilePage() {
         }))
         if (data.bank_address) setShowBankAddress(true)
       }
+
+      // Load employments
+      const { data: emps } = await supabase
+        .from('employments')
+        .select('*')
+        .eq('user_id', user!.id)
+        .order('tax_year', { ascending: false })
+
+      if (emps && emps.length > 0) {
+        setEmployments(emps.map(e => ({
+          id: e.id,
+          employer_name: e.employer_name ?? '',
+          city: e.city ?? '',
+          work_start: e.work_start ?? '',
+          work_end: e.work_end ?? '',
+          gross_income_eur: e.gross_income_eur?.toString() ?? '',
+          tax_year: e.tax_year?.toString() ?? '',
+          student_status: e.student_status ?? false,
+          university: e.university ?? '',
+        })))
+      }
     }
     load()
   }, [supabase])
@@ -65,14 +108,52 @@ export default function ProfilePage() {
   const set = (field: string, value: string | boolean) =>
     setForm(prev => ({ ...prev, [field]: value }))
 
+  const setEmp = (index: number, field: keyof Employment, value: string | boolean) => {
+    setEmployments(prev => prev.map((e, i) => i === index ? { ...e, [field]: value } : e))
+  }
+
+  const addEmployment = () => {
+    setEmployments(prev => [...prev, emptyEmployment()])
+    setExpandedEmp(employments.length)
+  }
+
+  const removeEmployment = (index: number) => {
+    setEmployments(prev => prev.filter((_, i) => i !== index))
+    setExpandedEmp(null)
+  }
+
   const save = async () => {
     setSaving(true)
     const { data: { user } } = await supabase.auth.getUser()
+    const userId = user!.id
+
+    // Save profile
     await supabase.from('profiles').update({
       ...form,
       gross_income_eur: form.gross_income_eur ? parseFloat(form.gross_income_eur) : null,
       updated_at: new Date().toISOString(),
-    }).eq('user_id', user!.id)
+    }).eq('user_id', userId)
+
+    // Save employments: delete all then re-insert
+    await supabase.from('employments').delete().eq('user_id', userId)
+    if (employments.length > 0) {
+      await supabase.from('employments').insert(
+        employments
+          .filter(e => e.employer_name.trim())
+          .map(e => ({
+            user_id: userId,
+            employer_name: e.employer_name.trim(),
+            city: e.city.trim() || null,
+            work_start: e.work_start || null,
+            work_end: e.work_end || null,
+            gross_income_eur: e.gross_income_eur ? parseFloat(e.gross_income_eur) : null,
+            tax_year: e.tax_year ? parseInt(e.tax_year) : null,
+            student_status: e.student_status,
+            university: e.university.trim() || null,
+          }))
+      )
+    }
+
     setSaving(false)
     setSaved(true)
     setTimeout(() => setSaved(false), 2500)
@@ -223,37 +304,121 @@ export default function ProfilePage() {
 
             {active === 'employment' && (
               <>
-                <label className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl cursor-pointer hover:bg-gray-100 active:bg-gray-200 transition-colors">
-                  <div className={`w-11 h-6 rounded-full transition-colors relative shrink-0 ${form.student_status ? 'bg-brand-red' : 'bg-gray-200'}`}>
-                    <div className={`w-4 h-4 bg-white rounded-full absolute top-1 transition-all shadow-sm ${form.student_status ? 'left-6' : 'left-1'}`} />
-                  </div>
-                  <input type="checkbox" className="hidden" checked={form.student_status} onChange={e => set('student_status', e.target.checked)} />
-                  <span className="text-sm font-semibold text-brand-navy leading-snug">I was a student while working in Germany</span>
-                </label>
-                {form.student_status && (
-                  <div>
-                    <label className={lbl}>University name</label>
-                    <input className={inp} value={form.university} onChange={e => set('university', e.target.value)} placeholder="University of Cologne" />
+                <div className="flex items-start gap-3 p-3.5 bg-blue-50 border border-blue-100 rounded-xl mb-1">
+                  <Briefcase size={14} className="text-blue-500 mt-0.5 shrink-0" />
+                  <p className="text-xs text-blue-700 leading-relaxed">
+                    Add each employer you worked for in Germany. You can add multiple entries for different years or different employers.
+                  </p>
+                </div>
+
+                {employments.length === 0 && (
+                  <div className="text-center py-8 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                    <Briefcase size={20} className="text-gray-300 mx-auto mb-2" />
+                    <p className="text-sm text-gray-400 font-semibold">No employments added yet</p>
+                    <p className="text-xs text-gray-300 mt-1">Click below to add your first employer</p>
                   </div>
                 )}
-                <div>
-                  <label className={lbl}>Employer name in Germany</label>
-                  <input className={inp} value={form.employer_name} onChange={e => set('employer_name', e.target.value)} placeholder="Amazon Deutschland GmbH" />
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className={lbl}>Work start</label>
-                    <input type="date" className={inp} value={form.work_start} onChange={e => set('work_start', e.target.value)} />
-                  </div>
-                  <div>
-                    <label className={lbl}>Work end</label>
-                    <input type="date" className={inp} value={form.work_end} onChange={e => set('work_end', e.target.value)} />
-                  </div>
-                </div>
-                <div>
-                  <label className={lbl}>Gross income in Germany (EUR)</label>
-                  <input type="number" inputMode="decimal" className={inp} value={form.gross_income_eur} onChange={e => set('gross_income_eur', e.target.value)} placeholder="15 000" />
-                </div>
+
+                {employments.map((emp, i) => {
+                  const isOpen = expandedEmp === i
+                  const title = emp.employer_name || 'New employment'
+                  const subtitle = [emp.tax_year && `Year ${emp.tax_year}`, emp.city].filter(Boolean).join(' · ') || 'Click to fill details'
+
+                  return (
+                    <div key={i} className="border border-black/[0.07] rounded-xl overflow-hidden">
+                      {/* Card header */}
+                      <button
+                        type="button"
+                        onClick={() => setExpandedEmp(isOpen ? null : i)}
+                        className="w-full flex items-center gap-3 px-4 py-3.5 bg-gray-50 hover:bg-gray-100 transition-colors text-left"
+                      >
+                        <div className="w-8 h-8 bg-brand-navy rounded-lg flex items-center justify-center shrink-0">
+                          <span className="text-white text-xs font-black">{String(i + 1).padStart(2, '0')}</span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-bold text-brand-navy truncate">{title}</p>
+                          <p className="text-[11px] text-gray-400 truncate">{subtitle}</p>
+                        </div>
+                        {emp.gross_income_eur && (
+                          <span className="text-xs font-bold text-brand-success hidden sm:block">
+                            €{Number(emp.gross_income_eur).toLocaleString()}
+                          </span>
+                        )}
+                        {isOpen ? <ChevronUp size={14} className="text-gray-400 shrink-0" /> : <ChevronDown size={14} className="text-gray-400 shrink-0" />}
+                      </button>
+
+                      {/* Card body */}
+                      {isOpen && (
+                        <div className="p-4 space-y-3 border-t border-gray-100">
+                          <div className="grid grid-cols-2 gap-3">
+                            <div className="col-span-2 sm:col-span-1">
+                              <label className={lbl}>Employer name *</label>
+                              <input className={inp} value={emp.employer_name} onChange={e => setEmp(i, 'employer_name', e.target.value)} placeholder="Amazon Deutschland GmbH" />
+                            </div>
+                            <div className="col-span-2 sm:col-span-1">
+                              <label className={lbl}>City in Germany</label>
+                              <input className={inp} value={emp.city} onChange={e => setEmp(i, 'city', e.target.value)} placeholder="Berlin" />
+                            </div>
+                          </div>
+                          <div>
+                            <label className={lbl}>Tax year</label>
+                            <select className={inp} value={emp.tax_year} onChange={e => setEmp(i, 'tax_year', e.target.value)}>
+                              <option value="">Select year</option>
+                              {TAX_YEAR_OPTIONS.map(y => <option key={y} value={y}>{y}</option>)}
+                            </select>
+                          </div>
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <label className={lbl}>Work start</label>
+                              <input type="date" className={inp} value={emp.work_start} onChange={e => setEmp(i, 'work_start', e.target.value)} />
+                            </div>
+                            <div>
+                              <label className={lbl}>Work end</label>
+                              <input type="date" className={inp} value={emp.work_end} onChange={e => setEmp(i, 'work_end', e.target.value)} />
+                            </div>
+                          </div>
+                          <div>
+                            <label className={lbl}>Gross income (EUR)</label>
+                            <input type="number" inputMode="decimal" className={inp} value={emp.gross_income_eur} onChange={e => setEmp(i, 'gross_income_eur', e.target.value)} placeholder="15 000" />
+                          </div>
+
+                          {/* Student toggle */}
+                          <label className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl cursor-pointer hover:bg-gray-100 transition-colors">
+                            <div className={`w-10 h-5 rounded-full transition-colors relative shrink-0 ${emp.student_status ? 'bg-brand-red' : 'bg-gray-200'}`}>
+                              <div className={`w-3.5 h-3.5 bg-white rounded-full absolute top-[3px] transition-all shadow-sm ${emp.student_status ? 'left-[22px]' : 'left-[3px]'}`} />
+                            </div>
+                            <input type="checkbox" className="hidden" checked={emp.student_status} onChange={e => setEmp(i, 'student_status', e.target.checked)} />
+                            <span className="text-xs font-semibold text-brand-navy">Student during this employment</span>
+                          </label>
+                          {emp.student_status && (
+                            <div>
+                              <label className={lbl}>University</label>
+                              <input className={inp} value={emp.university} onChange={e => setEmp(i, 'university', e.target.value)} placeholder="University of Cologne" />
+                            </div>
+                          )}
+
+                          {/* Remove */}
+                          <button
+                            type="button"
+                            onClick={() => removeEmployment(i)}
+                            className="flex items-center gap-1.5 text-xs font-semibold text-red-400 hover:text-red-600 transition-colors mt-1"
+                          >
+                            <Trash2 size={12} /> Remove this employment
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+
+                {/* Add button */}
+                <button
+                  type="button"
+                  onClick={addEmployment}
+                  className="w-full flex items-center justify-center gap-2 py-3.5 bg-gray-50 hover:bg-gray-100 active:bg-gray-200 border border-dashed border-gray-200 hover:border-brand-red/30 rounded-xl text-sm font-bold text-gray-500 hover:text-brand-red transition-all active:scale-[0.99]"
+                >
+                  <Plus size={15} strokeWidth={2.5} /> Add employment
+                </button>
               </>
             )}
 

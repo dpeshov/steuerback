@@ -99,6 +99,18 @@ type PaymentRecord = {
   created_at: string
 }
 
+type EmploymentData = {
+  id: string
+  employer_name: string
+  city: string | null
+  work_start: string | null
+  work_end: string | null
+  gross_income_eur: number | null
+  tax_year: number | null
+  student_status: boolean
+  university: string | null
+}
+
 // ── Constants ───────────────────────────────────────────────────────────────
 const ALL_STATUSES: ApplicationStatus[] = [
   'draft', 'profile_incomplete', 'documents_pending', 'ready_for_payment',
@@ -158,7 +170,7 @@ function fmtDateTime(iso: string) {
 
 // ── Main Component ──────────────────────────────────────────────────────────
 export default function ApplicationTabs({
-  app, profile, documents, logs, notes, userEmail, payments, initialTab,
+  app, profile, documents, logs, notes, userEmail, payments, employments, initialTab,
 }: {
   app: AppData
   profile: ProfileData
@@ -167,6 +179,7 @@ export default function ApplicationTabs({
   notes: NoteData[]
   userEmail: string
   payments: PaymentRecord[]
+  employments: EmploymentData[]
   initialTab?: string
 }) {
   const [activeTab, setActiveTab] = useState(initialTab ?? 'overview')
@@ -336,8 +349,8 @@ export default function ApplicationTabs({
         </div>
 
         <div className="p-6">
-          {activeTab === 'overview'  && <OverviewTab  app={app} profile={profile} userEmail={userEmail} documents={documents} internalNotes={internalNotes} />}
-          {activeTab === 'profile'   && <ProfileTab   profile={profile} userEmail={userEmail} />}
+          {activeTab === 'overview'  && <OverviewTab  app={app} profile={profile} userEmail={userEmail} documents={documents} internalNotes={internalNotes} employments={employments} />}
+          {activeTab === 'profile'   && <ProfileTab   profile={profile} userEmail={userEmail} employments={employments} />}
           {activeTab === 'documents' && <DocumentsTab documents={documents} appId={app.id} userId={app.user_id} />}
           {activeTab === 'timeline'  && <TimelineTab  logs={logs} />}
           {activeTab === 'messages'  && <MessagesTab  applicationId={app.id} notes={publicNotes} appUserId={app.user_id} />}
@@ -349,12 +362,13 @@ export default function ApplicationTabs({
 }
 
 // ── Overview Tab ────────────────────────────────────────────────────────────
-function OverviewTab({ app, profile, userEmail, documents, internalNotes }: {
+function OverviewTab({ app, profile, userEmail, documents, internalNotes, employments }: {
   app: AppData
   profile: ProfileData
   userEmail: string
   documents: DocData[]
   internalNotes: NoteData[]
+  employments: EmploymentData[]
 }) {
   const [noteText, setNoteText] = useState('')
   const [sending, setSending] = useState(false)
@@ -417,29 +431,64 @@ function OverviewTab({ app, profile, userEmail, documents, internalNotes }: {
         {/* Work in Germany */}
         <div className="border border-gray-100 rounded-xl p-5">
           <h3 className="font-bold text-brand-navy mb-4">{t('workInGermany')}</h3>
-          <div className="space-y-2.5 mb-4">
-            {profile?.employer_name && (
-              <div className="flex items-center gap-2 text-sm text-gray-600">
-                <Briefcase size={13} className="text-gray-400 shrink-0" />
-                <span>{profile.employer_name}</span>
-              </div>
-            )}
-            {profile?.work_start && (
-              <div className="flex items-center gap-2 text-sm text-gray-600">
-                <Calendar size={13} className="text-gray-400 shrink-0" />
-                <span>{profile.work_start}{profile.work_end ? ` - ${profile.work_end}` : ` - ${t('present')}`}</span>
-              </div>
-            )}
-            {profile?.gross_income_eur && (
-              <div className="flex items-center gap-2 text-sm text-gray-600">
-                <span className="text-gray-400 font-bold text-xs shrink-0">€</span>
-                <span>~€{Number(profile.gross_income_eur).toLocaleString()} {t('earnings')}</span>
-              </div>
-            )}
-            {!profile?.employer_name && !profile?.work_start && (
-              <p className="text-xs text-gray-400">{t('noEmploymentData')}</p>
-            )}
-          </div>
+
+          {employments.length > 0 ? (
+            <div className="space-y-3 mb-4">
+              {employments.map((emp) => (
+                <div key={emp.id} className="bg-gray-50 rounded-lg p-3 space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-sm font-semibold text-brand-navy">
+                      <Briefcase size={13} className="text-gray-400 shrink-0" />
+                      {emp.employer_name}
+                    </div>
+                    {emp.tax_year && (
+                      <span className="text-[10px] font-bold bg-brand-navy/10 text-brand-navy px-2 py-0.5 rounded-full">{emp.tax_year}</span>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500">
+                    {emp.city && <span>{emp.city}</span>}
+                    {emp.work_start && (
+                      <span className="flex items-center gap-1">
+                        <Calendar size={10} className="text-gray-400" />
+                        {emp.work_start}{emp.work_end ? ` → ${emp.work_end}` : ` → ${t('present')}`}
+                      </span>
+                    )}
+                    {emp.gross_income_eur != null && (
+                      <span className="font-semibold text-brand-success">€{Number(emp.gross_income_eur).toLocaleString()}</span>
+                    )}
+                    {emp.student_status && (
+                      <span className="text-violet-600">Student{emp.university ? ` · ${emp.university}` : ''}</span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="space-y-2.5 mb-4">
+              {profile?.employer_name && (
+                <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <Briefcase size={13} className="text-gray-400 shrink-0" />
+                  <span>{profile.employer_name}</span>
+                </div>
+              )}
+              {profile?.work_start && (
+                <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <Calendar size={13} className="text-gray-400 shrink-0" />
+                  <span>{profile.work_start}{profile.work_end ? ` - ${profile.work_end}` : ` - ${t('present')}`}</span>
+                </div>
+              )}
+              {profile?.gross_income_eur && (
+                <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <span className="text-gray-400 font-bold text-xs shrink-0">€</span>
+                  <span>~€{Number(profile.gross_income_eur).toLocaleString()} {t('earnings')}</span>
+                </div>
+              )}
+              {!profile?.employer_name && !profile?.work_start && (
+                <p className="text-xs text-gray-400">{t('noEmploymentData')}</p>
+              )}
+            </div>
+          )}
+
           <div className="flex flex-wrap gap-1.5">
             <span className="px-2.5 py-1 bg-gray-100 text-gray-600 text-xs rounded-full font-medium">
               {t('taxYear')}: {app.tax_year}
@@ -518,7 +567,7 @@ function OverviewTab({ app, profile, userEmail, documents, internalNotes }: {
 }
 
 // ── Profile Tab ─────────────────────────────────────────────────────────────
-function ProfileTab({ profile, userEmail }: { profile: ProfileData; userEmail: string }) {
+function ProfileTab({ profile, userEmail, employments }: { profile: ProfileData; userEmail: string; employments: EmploymentData[] }) {
   const t = useTranslations('admin.profileTab')
 
   if (!profile) {
@@ -565,9 +614,24 @@ function ProfileTab({ profile, userEmail }: { profile: ProfileData; userEmail: s
           <Field label={t('accountHolder')} value={profile.bank_account_holder} />
         </div>
       </div>
-      {(profile.employer_name || profile.work_start || profile.gross_income_eur) && (
-        <div className="border border-gray-100 rounded-xl p-5">
-          <h3 className="font-bold text-brand-navy mb-4">{t('employment')}</h3>
+      <div className="border border-gray-100 rounded-xl p-5">
+        <h3 className="font-bold text-brand-navy mb-4">{t('employment')}</h3>
+        {employments.length > 0 ? (
+          <div className="space-y-3">
+            {employments.map((emp) => (
+              <div key={emp.id} className="bg-gray-50 rounded-lg p-4">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  <Field label={t('employer')} value={emp.employer_name} />
+                  <Field label="City" value={emp.city} />
+                  <Field label="Tax Year" value={emp.tax_year?.toString()} />
+                  <Field label={t('workPeriod')} value={emp.work_start ? `${emp.work_start} → ${emp.work_end ?? t('present')}` : null} />
+                  <Field label={t('grossIncome')} value={emp.gross_income_eur != null ? `€${Number(emp.gross_income_eur).toLocaleString()}` : null} />
+                  {emp.student_status && <Field label={t('university')} value={emp.university ?? t('yes')} />}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (profile.employer_name || profile.work_start || profile.gross_income_eur) ? (
           <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
             <Field label={t('employer')}    value={profile.employer_name} />
             <Field label={t('workPeriod')}  value={profile.work_start ? `${profile.work_start} → ${profile.work_end ?? t('present')}` : null} />
@@ -576,8 +640,10 @@ function ProfileTab({ profile, userEmail }: { profile: ProfileData; userEmail: s
             {profile.student_status != null && <Field label={t('student')} value={profile.student_status ? t('yes') : t('no')} />}
             {profile.university      && <Field label={t('university')} value={profile.university} />}
           </div>
-        </div>
-      )}
+        ) : (
+          <p className="text-xs text-gray-400">{t('noEmploymentData')}</p>
+        )}
+      </div>
     </div>
   )
 }

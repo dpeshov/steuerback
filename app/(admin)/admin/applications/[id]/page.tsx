@@ -30,12 +30,14 @@ export default async function ApplicationDetailPage({
     { data: logs },
     { data: notes },
     { data: payments },
+    { data: employments },
   ] = await Promise.all([
     supabase.from('profiles').select('*').eq('user_id', app.user_id).single(),
     supabase.from('documents').select('*').eq('application_id', id).order('created_at', { ascending: false }),
     supabase.from('status_logs').select('*').eq('application_id', id).order('created_at', { ascending: false }),
     supabase.from('notes').select('id, text, created_by, is_public, created_at').eq('application_id', id).order('created_at', { ascending: true }),
     supabase.from('payments').select('*').eq('application_id', id).order('created_at', { ascending: false }),
+    supabase.from('employments').select('*').eq('user_id', app.user_id).order('tax_year', { ascending: false }),
   ])
 
   const user   = app.users as { id: string; email: string; role: string; created_at: string } | null
@@ -50,6 +52,7 @@ export default async function ApplicationDetailPage({
       notes={notes ?? []}
       userEmail={user?.email ?? '—'}
       payments={payments ?? []}
+      employments={employments ?? []}
       initialTab={initialTab}
     />
   )
