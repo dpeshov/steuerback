@@ -12,7 +12,7 @@ export async function submitLead(_prev: LeadFormState, formData: FormData): Prom
   const email = formData.get('email') as string
   const phoneCountryCode = formData.get('phone_country_code') as string
   const phoneNumber = formData.get('phone_number') as string
-  const contactApp = formData.get('contact_app') as string
+  const contactApps = formData.getAll('contact_app') as string[]
   const taxYears = formData.getAll('tax_years').map(Number)
   const hasSteuerIdRaw = formData.get('has_steuer_id')
   const hasPayslipsRaw = formData.get('has_payslips')
@@ -34,7 +34,7 @@ export async function submitLead(_prev: LeadFormState, formData: FormData): Prom
     email: email.trim().toLowerCase(),
     phone_country_code: phoneCountryCode || '+49',
     phone_number: phoneNumber.trim(),
-    contact_app: contactApp || 'whatsapp',
+    contact_app: contactApps.length > 0 ? contactApps.join(', ') : 'not specified',
     tax_years: taxYears,
     has_steuer_id: hasSteuerIdRaw === 'yes',
     has_payslips: hasPayslipsRaw === 'yes',

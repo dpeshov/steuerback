@@ -3,25 +3,33 @@ import { useFormState, useFormStatus } from 'react-dom'
 import { CheckCircle, Loader2 } from 'lucide-react'
 import { submitLead, type LeadFormState } from './actions'
 
-const COUNTRY_CODES = [
+const PRIORITY_CODES = [
   { code: '+49',  flag: '🇩🇪', label: 'Germany' },
-  { code: '+381', flag: '🇷🇸', label: 'Serbia' },
-  { code: '+385', flag: '🇭🇷', label: 'Croatia' },
-  { code: '+387', flag: '🇧🇦', label: 'Bosnia' },
   { code: '+389', flag: '🇲🇰', label: 'N. Macedonia' },
-  { code: '+382', flag: '🇲🇪', label: 'Montenegro' },
-  { code: '+383', flag: '🇽🇰', label: 'Kosovo' },
+  { code: '+385', flag: '🇭🇷', label: 'Croatia' },
+  { code: '+381', flag: '🇷🇸', label: 'Serbia' },
   { code: '+355', flag: '🇦🇱', label: 'Albania' },
-  { code: '+40',  flag: '🇷🇴', label: 'Romania' },
-  { code: '+359', flag: '🇧🇬', label: 'Bulgaria' },
+  { code: '+383', flag: '🇽🇰', label: 'Kosovo' },
   { code: '+90',  flag: '🇹🇷', label: 'Turkey' },
-  { code: '+380', flag: '🇺🇦', label: 'Ukraine' },
-  { code: '+48',  flag: '🇵🇱', label: 'Poland' },
-  { code: '+421', flag: '🇸🇰', label: 'Slovakia' },
+  { code: '+375', flag: '🇧🇾', label: 'Belarus' },
+  { code: '+995', flag: '🇬🇪', label: 'Georgia' },
+  { code: '+7',   flag: '🇰🇿', label: 'Kazakhstan' },
+  { code: '+998', flag: '🇺🇿', label: 'Uzbekistan' },
+  { code: '+992', flag: '🇹🇯', label: 'Tajikistan' },
+  { code: '+387', flag: '🇧🇦', label: 'Bosnia' },
+  { code: '+382', flag: '🇲🇪', label: 'Montenegro' },
+]
+
+const OTHER_CODES = [
+  { code: '+359', flag: '🇧🇬', label: 'Bulgaria' },
   { code: '+420', flag: '🇨🇿', label: 'Czechia' },
   { code: '+36',  flag: '🇭🇺', label: 'Hungary' },
   { code: '+91',  flag: '🇮🇳', label: 'India' },
   { code: '+977', flag: '🇳🇵', label: 'Nepal' },
+  { code: '+48',  flag: '🇵🇱', label: 'Poland' },
+  { code: '+40',  flag: '🇷🇴', label: 'Romania' },
+  { code: '+421', flag: '🇸🇰', label: 'Slovakia' },
+  { code: '+380', flag: '🇺🇦', label: 'Ukraine' },
   { code: '+44',  flag: '🇬🇧', label: 'UK' },
   { code: '+1',   flag: '🇺🇸', label: 'USA' },
 ]
@@ -111,20 +119,26 @@ export default function LeadForm() {
       <div>
         <label className={labelClass}>Phone number *</label>
         <div className="flex gap-2">
-          <select name="phone_country_code" defaultValue="+49" className={`${inputClass} w-[140px] shrink-0`}>
-            {COUNTRY_CODES.map(({ code, flag, label }) => (
+          <select name="phone_country_code" defaultValue="+49" className={`bg-white/5 border border-white/10 text-white rounded-xl px-3 py-3 text-sm focus:outline-none focus:border-brand-red/50 focus:ring-1 focus:ring-brand-red/30 transition-colors w-[100px] shrink-0`}>
+            {PRIORITY_CODES.map(({ code, flag }) => (
               <option key={code} value={code} className="bg-[#1a1a2e] text-white">
-                {flag} {code} {label}
+                {flag} {code}
+              </option>
+            ))}
+            <option disabled className="bg-[#1a1a2e] text-white/30">──────</option>
+            {OTHER_CODES.map(({ code, flag }) => (
+              <option key={code} value={code} className="bg-[#1a1a2e] text-white">
+                {flag} {code}
               </option>
             ))}
           </select>
-          <input name="phone_number" type="tel" required className={inputClass} placeholder="170 1234567" />
+          <input name="phone_number" type="tel" required className={`${inputClass} flex-1`} placeholder="170 1234567" />
         </div>
       </div>
 
-      {/* Contact app */}
+      {/* Contact apps */}
       <div>
-        <label className={labelClass}>How can we reach you on this number?</label>
+        <label className={labelClass}>How can we reach you on this number? (select all that apply)</label>
         <div className="flex flex-wrap gap-2">
           {CONTACT_APPS.map(({ value, label }) => (
             <label
@@ -132,11 +146,10 @@ export default function LeadForm() {
               className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 cursor-pointer hover:border-white/20 transition-colors has-[:checked]:border-brand-red/50 has-[:checked]:bg-brand-red/10"
             >
               <input
-                type="radio"
+                type="checkbox"
                 name="contact_app"
                 value={value}
-                defaultChecked={value === 'whatsapp'}
-                className="accent-brand-red w-3.5 h-3.5"
+                className="accent-brand-red w-3.5 h-3.5 rounded"
               />
               <span className="text-sm text-white/70">{label}</span>
             </label>
