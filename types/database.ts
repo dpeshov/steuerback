@@ -38,6 +38,7 @@ export type Database = {
           created_at: string
           last_login_at: string | null
           is_active: boolean
+          is_test: boolean
         }
         Insert: {
           id?: string
@@ -46,6 +47,7 @@ export type Database = {
           created_at?: string
           last_login_at?: string | null
           is_active?: boolean
+          is_test?: boolean
         }
         Update: {
           id?: string
@@ -53,6 +55,7 @@ export type Database = {
           role?: UserRole
           last_login_at?: string | null
           is_active?: boolean
+          is_test?: boolean
         }
         Relationships: []
       }
@@ -202,6 +205,7 @@ export type Database = {
           updated_at: string
           submitted_at: string | null
           completed_at: string | null
+          is_test: boolean
         }
         Insert: {
           id?: string
@@ -215,6 +219,7 @@ export type Database = {
           utm_source?: string | null
           utm_medium?: string | null
           utm_campaign?: string | null
+          is_test?: boolean
         }
         Update: {
           tax_year?: number
@@ -229,6 +234,7 @@ export type Database = {
           updated_at?: string
           submitted_at?: string | null
           completed_at?: string | null
+          is_test?: boolean
         }
         Relationships: [
           {
@@ -460,6 +466,7 @@ export type Database = {
           has_payslips: boolean
           status: string
           admin_notes: string | null
+          is_test: boolean
           created_at: string
           updated_at: string
         }
@@ -476,6 +483,7 @@ export type Database = {
           has_payslips?: boolean
           status?: string
           admin_notes?: string | null
+          is_test?: boolean
         }
         Update: {
           first_name?: string
@@ -489,6 +497,7 @@ export type Database = {
           has_payslips?: boolean
           status?: string
           admin_notes?: string | null
+          is_test?: boolean
           updated_at?: string
         }
         Relationships: []

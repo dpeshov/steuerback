@@ -43,3 +43,12 @@ export async function inviteLead(leadId: string) {
 
   return { success: true, registerLink }
 }
+
+export async function toggleLeadTest(leadId: string, isTest: boolean) {
+  const supabase = createAdminClient()
+  await supabase
+    .from('leads')
+    .update({ is_test: isTest, updated_at: new Date().toISOString() })
+    .eq('id', leadId)
+  revalidatePath('/admin/leads')
+}

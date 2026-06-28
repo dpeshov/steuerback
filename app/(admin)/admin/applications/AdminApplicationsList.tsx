@@ -232,7 +232,12 @@ export default function AdminApplicationsList({ applications }: { applications: 
                       </button>
                     </td>
                     <td className="px-4 py-3.5">
-                      <p className="font-medium text-brand-navy">{app.applicant_name ?? app.users?.email ?? '—'}</p>
+                      <div className="flex items-center gap-1.5">
+                        <p className="font-medium text-brand-navy">{app.applicant_name ?? app.users?.email ?? '—'}</p>
+                        {(app as AppRow & { is_test?: boolean }).is_test && (
+                          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-orange-100 text-orange-600">TEST</span>
+                        )}
+                      </div>
                       {app.applicant_name && <p className="text-xs text-gray-400 mt-0.5">{app.users?.email}</p>}
                     </td>
                     <td className="px-4 py-3.5 text-gray-600 font-semibold">{app.tax_year}</td>
@@ -285,9 +290,14 @@ export default function AdminApplicationsList({ applications }: { applications: 
                 </button>
                 <Link href={`/admin/applications/${app.id}`} className="flex-1 min-w-0 flex items-center gap-3">
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-brand-navy truncate">
-                      {app.applicant_name ?? app.users?.email ?? '—'}
-                    </p>
+                    <div className="flex items-center gap-1.5">
+                      <p className="text-sm font-semibold text-brand-navy truncate">
+                        {app.applicant_name ?? app.users?.email ?? '—'}
+                      </p>
+                      {(app as AppRow & { is_test?: boolean }).is_test && (
+                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-orange-100 text-orange-600 shrink-0">TEST</span>
+                      )}
+                    </div>
                     <div className="flex items-center gap-2 mt-1 flex-wrap">
                       <span className="text-xs text-gray-400">Tax {app.tax_year}</span>
                       <span className={`px-2 py-0.5 rounded-full text-[11px] font-semibold ${STATUS_COLORS[app.status]}`}>

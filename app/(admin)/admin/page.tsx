@@ -4,6 +4,7 @@ import {
   FileText, Users, CheckCircle, Clock, Banknote,
   TrendingUp, AlertCircle, ChevronRight, ArrowUpRight, Activity,
 } from 'lucide-react'
+import DeleteTestData from './DeleteTestData'
 
 // ── Status config ─────────────────────────────────────────────────────────────
 const STATUS_COLORS: Record<string, string> = {
@@ -87,27 +88,30 @@ export default async function AdminDashboard() {
     { data: allApps },
     { data: recentActivity },
     { data: docsNeedingReview },
+    { count: testUsers },
+    { count: testApps },
+    { count: testLeads },
   ] = await Promise.all([
     supabase.from('applications').select('*', { count: 'exact', head: true }),
     supabase.from('users').select('*', { count: 'exact', head: true }),
     supabase.from('documents').select('*', { count: 'exact', head: true }).eq('review_status', 'pending'),
     supabase.from('payments').select('amount, status, created_at').eq('status', 'paid'),
-    // All apps for status funnel + monthly chart
     supabase.from('applications').select('id, status, created_at, tax_year, applicant_name, users(email)')
       .order('created_at', { ascending: false }),
-    // Recent status logs (activity feed)
     supabase
       .from('status_logs')
       .select('id, new_status, old_status, created_at, reason, applications(id, tax_year, applicant_name, users(email))')
       .order('created_at', { ascending: false })
       .limit(12),
-    // Documents needing attention
     supabase
       .from('documents')
       .select('id, document_type, review_status, application_id, applications(id, applicant_name, tax_year, users(email))')
       .eq('review_status', 'pending')
       .order('created_at', { ascending: false })
       .limit(5),
+    supabase.from('users').select('*', { count: 'exact', head: true }).eq('is_test', true),
+    supabase.from('applications').select('*', { count: 'exact', head: true }).eq('is_test', true),
+    supabase.from('leads').select('*', { count: 'exact', head: true }).eq('is_test', true),
   ])
 
   // ── Computed metrics ────────────────────────────────────────────────────────
@@ -445,6 +449,9 @@ export default async function AdminDashboard() {
           )}
         </div>
       </div>
+
+      {/* Test data management */}
+      <DeleteTestData counts={{ users: testUsers ?? 0, applications: testApps ?? 0, leads: testLeads ?? 0 }} />
 
     </div>
   )

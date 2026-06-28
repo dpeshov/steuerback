@@ -25,7 +25,7 @@ export default async function AdminUsersPage() {
   const { data: users } = await supabase
     .from('users')
     .select(`
-      id, email, role, created_at, is_active,
+      id, email, role, created_at, is_active, is_test,
       profiles (first_name, last_name, nationality, city, country_of_residence, profile_complete, gross_income_eur, employer_name, phone),
       applications (id, tax_year, status, payment_status, created_at)
     `)
@@ -98,9 +98,14 @@ export default async function AdminUsersPage() {
                           </span>
                         </div>
                         <div>
-                          <p className="font-semibold text-brand-navy leading-tight">
-                            {fullName || <span className="text-gray-400 font-normal italic">{t('noName')}</span>}
-                          </p>
+                          <div className="flex items-center gap-1.5">
+                            <p className="font-semibold text-brand-navy leading-tight">
+                              {fullName || <span className="text-gray-400 font-normal italic">{t('noName')}</span>}
+                            </p>
+                            {user.is_test && (
+                              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-orange-100 text-orange-600">TEST</span>
+                            )}
+                          </div>
                           <p className="text-xs text-gray-400 mt-0.5">{user.email}</p>
                           {profile?.phone && (
                             <div className="flex items-center gap-1 mt-0.5">
@@ -195,9 +200,14 @@ export default async function AdminUsersPage() {
                   </span>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-brand-navy text-sm truncate">
-                    {fullName || user.email}
-                  </p>
+                  <div className="flex items-center gap-1.5">
+                    <p className="font-semibold text-brand-navy text-sm truncate">
+                      {fullName || user.email}
+                    </p>
+                    {user.is_test && (
+                      <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-orange-100 text-orange-600 shrink-0">TEST</span>
+                    )}
+                  </div>
                   <p className="text-xs text-gray-400 truncate">{user.email}</p>
                   {profile?.phone && (
                     <div className="flex items-center gap-1 mt-0.5">

@@ -1,7 +1,7 @@
 'use client'
 import { useState } from 'react'
-import { Phone, Mail, Copy, Check, UserPlus, MessageSquare, ChevronDown, ChevronUp } from 'lucide-react'
-import { updateLeadStatus, updateLeadNotes, inviteLead } from './actions'
+import { Phone, Mail, Copy, Check, UserPlus, MessageSquare, ChevronDown, ChevronUp, FlaskConical } from 'lucide-react'
+import { updateLeadStatus, updateLeadNotes, inviteLead, toggleLeadTest } from './actions'
 
 type Lead = {
   id: string
@@ -16,6 +16,7 @@ type Lead = {
   has_payslips: boolean
   status: string
   admin_notes: string | null
+  is_test: boolean
   created_at: string
   updated_at: string
 }
@@ -102,6 +103,9 @@ function LeadRow({ lead }: { lead: Lead }) {
           </p>
         </div>
         <div className="hidden sm:flex items-center gap-2">
+          {lead.is_test && (
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-orange-100 text-orange-600">TEST</span>
+          )}
           <span className="text-xs text-gray-400">
             {lead.tax_years.sort().join(', ')}
           </span>
@@ -176,6 +180,17 @@ function LeadRow({ lead }: { lead: Lead }) {
                 <UserPlus size={12} /> Invite to register
               </button>
             )}
+
+            <button
+              onClick={() => toggleLeadTest(lead.id, !lead.is_test)}
+              className={`inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-lg transition-colors ${
+                lead.is_test
+                  ? 'bg-orange-100 text-orange-600 hover:bg-orange-200'
+                  : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+              }`}
+            >
+              <FlaskConical size={12} /> {lead.is_test ? 'Unmark test' : 'Mark as test'}
+            </button>
           </div>
 
           {/* Invite link */}

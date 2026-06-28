@@ -2,7 +2,7 @@
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter, usePathname } from 'next/navigation'
-import { Shield, LayoutList, Users, LogOut, UserPlus, LayoutDashboard, User, Menu, X, ExternalLink, Globe } from 'lucide-react'
+import { Shield, LayoutList, Users, LogOut, UserPlus, LayoutDashboard, User, Menu, X } from 'lucide-react'
 import LanguageSwitcher from '@/components/LanguageSwitcher'
 import { useState } from 'react'
 
@@ -13,14 +13,6 @@ const ADMIN_NAV = [
   { href: '/admin/users',        icon: Users,           label: 'Users' },
 ]
 
-const SITE_LINKS = [
-  { href: '/',              label: 'Home' },
-  { href: '/how-it-works',  label: 'How it works' },
-  { href: '/pricing',       label: 'Pricing' },
-  { href: '/faq',           label: 'FAQ' },
-  { href: '/apply',         label: 'Apply form' },
-  { href: '/calculate',     label: 'Tax Calculator' },
-]
 
 export function AdminSidebar() {
   const pathname = usePathname()
@@ -59,22 +51,6 @@ export function AdminSidebar() {
           )
         })}
       </nav>
-
-      {/* Site links */}
-      <div className="px-3 py-3 border-t border-white/8">
-        <p className="px-3 text-[10px] font-bold text-white/20 uppercase tracking-widest mb-2">Public Pages</p>
-        {SITE_LINKS.map(({ href, label }) => (
-          <Link
-            key={href}
-            href={href}
-            target="_blank"
-            className="flex items-center justify-between gap-2 px-3 py-1.5 rounded-lg text-xs font-medium text-white/30 hover:text-white/60 hover:bg-white/5 transition-all"
-          >
-            {label}
-            <ExternalLink size={10} />
-          </Link>
-        ))}
-      </div>
 
       {/* Bottom */}
       <div className="px-3 py-4 border-t border-white/8">
@@ -196,23 +172,6 @@ export default function AdminTopBar() {
                 )
               })}
             </nav>
-
-            {/* Site links */}
-            <div className="px-3 py-3 border-t border-white/8">
-              <p className="px-3 text-[10px] font-bold text-white/20 uppercase tracking-widest mb-2">Public Pages</p>
-              {SITE_LINKS.map(({ href, label }) => (
-                <Link
-                  key={href}
-                  href={href}
-                  target="_blank"
-                  onClick={() => setMobileOpen(false)}
-                  className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-xs font-medium text-white/30 hover:text-white/60 hover:bg-white/5 transition-all"
-                >
-                  {label}
-                  <ExternalLink size={10} />
-                </Link>
-              ))}
-            </div>
 
             <div className="px-3 py-4 border-t border-white/8">
               <Link
