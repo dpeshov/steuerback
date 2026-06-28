@@ -1,0 +1,22 @@
+-- Seed ~20 dummy leads for testing
+INSERT INTO leads (first_name, last_name, email, phone_country_code, phone_number, contact_app, tax_years, has_steuer_id, has_payslips, status, admin_notes, created_at) VALUES
+('Marko',    'Petrovic',    'marko.petrovic@gmail.com',     '+381', '641234567',  'whatsapp',          '{2023,2024}',     true,  true,  'new',       NULL, now() - interval '2 hours'),
+('Ana',      'Jovanovska',  'ana.jovanovska@yahoo.com',     '+389', '71234567',   'viber, whatsapp',   '{2022,2023,2024}', false, true,  'new',       NULL, now() - interval '5 hours'),
+('Fatmir',   'Hoxha',       'fatmir.hoxha@hotmail.com',     '+355', '692345678',  'whatsapp',          '{2024}',          true,  true,  'contacted', 'Called on June 27, interested', now() - interval '1 day'),
+('Ivana',    'Kovacevic',   'ivana.k@gmail.com',            '+385', '915678901',  'viber',             '{2023,2024}',     true,  false, 'new',       NULL, now() - interval '3 hours'),
+('Mehmet',   'Yilmaz',      'mehmet.yilmaz@outlook.com',    '+90',  '5321234567', 'whatsapp, telegram','{2022,2023}',     false, false, 'new',       NULL, now() - interval '8 hours'),
+('Elena',    'Dimitrova',   'elena.dim@gmail.com',          '+389', '75678901',   'viber',             '{2021,2022,2023}', true,  true,  'invited',   'Sent registration link', now() - interval '3 days'),
+('Dragan',   'Nikolic',     'dragan.n@yahoo.com',           '+381', '601234567',  'telegram',          '{2024}',          false, true,  'new',       NULL, now() - interval '12 hours'),
+('Arben',    'Krasniqi',    'arben.krasniqi@gmail.com',     '+383', '44123456',   'whatsapp, viber',   '{2023,2024}',     true,  true,  'contacted', 'Spoke via WhatsApp, will send docs', now() - interval '2 days'),
+('Svetlana', 'Popovic',     'svetlana.p@mail.com',          '+382', '67234567',   'viber',             '{2022,2023,2024}', false, false, 'new',       NULL, now() - interval '6 hours'),
+('Emre',     'Ozturk',      'emre.ozturk@gmail.com',        '+90',  '5059876543', 'whatsapp',          '{2024}',          true,  true,  'converted', 'Registered as user, application started', now() - interval '5 days'),
+('Nino',     'Gelashvili',  'nino.gela@gmail.com',          '+995', '555123456',  'telegram, whatsapp','{2023,2024}',     false, true,  'new',       NULL, now() - interval '1 hour'),
+('Almir',    'Hadzic',      'almir.h@outlook.com',          '+387', '61234567',   'viber',             '{2022,2023}',     true,  false, 'contacted', 'Left voicemail', now() - interval '4 days'),
+('Katerina', 'Stojanova',   'katerina.s@yahoo.com',         '+389', '72345678',   'whatsapp',          '{2021,2022,2023,2024}', true, true, 'new',   NULL, now() - interval '30 minutes'),
+('Oleksiy',  'Bondarenko',  'oleksiy.b@ukr.net',            '+380', '501234567',  'telegram',          '{2023,2024}',     false, false, 'new',       NULL, now() - interval '4 hours'),
+('Burak',    'Demir',       'burak.demir@gmail.com',        '+90',  '5437654321', 'whatsapp',          '{2024}',          true,  true,  'rejected',  'Not eligible - did not work in Germany', now() - interval '6 days'),
+('Milica',   'Todorovic',   'milica.t@gmail.com',           '+381', '631234567',  'viber, whatsapp',   '{2023,2024}',     false, true,  'new',       NULL, now() - interval '9 hours'),
+('Davit',    'Kapanadze',   'davit.k@gmail.com',            '+995', '577234567',  'whatsapp',          '{2022,2023}',     true,  true,  'invited',   'Sent link via WhatsApp', now() - interval '2 days'),
+('Agron',    'Berisha',     'agron.berisha@hotmail.com',     '+383', '49876543',   'whatsapp, viber',   '{2024}',          false, false, 'new',       NULL, now() - interval '7 hours'),
+('Sanela',   'Ibrahimovic', 'sanela.i@gmail.com',           '+387', '62345678',   'viber',             '{2022,2023,2024}', true,  true,  'contacted', 'Will call back Monday', now() - interval '1 day'),
+('Timur',    'Suleymanov',  'timur.s@mail.ru',              '+7',   '7011234567', 'telegram',          '{2023,2024}',     false, true,  'new',       NULL, now() - interval '10 hours');
