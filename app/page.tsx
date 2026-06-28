@@ -1,8 +1,9 @@
 import Link from 'next/link'
-import { CheckCircle, Shield, Globe, ArrowRight, Star, Zap, Clock, Users, AlertCircle } from 'lucide-react'
+import { CheckCircle, Shield, Globe, ArrowRight, Star, Zap, Clock, Users } from 'lucide-react'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import RefundCalculator from '@/components/landing/RefundCalculator'
+import AnnouncementBanner from '@/components/landing/AnnouncementBanner'
 
 const steps = [
   { n: '01', title: 'Create your free account', desc: 'Register in 60 seconds. No commitment required.' },
@@ -69,18 +70,8 @@ const lastClaimYear = currentYear - 4
 export default function HomePage() {
   return (
     <>
+      <AnnouncementBanner />
       <Navbar />
-
-      {/* ── DEADLINE BANNER ─────────────────────────────────────────────── */}
-      <div className="bg-brand-red text-white text-center py-2.5 px-4 text-sm font-semibold">
-        <span className="inline-flex items-center gap-2">
-          <AlertCircle size={14} />
-          Deadline: You can still claim refunds for {lastClaimYear}–{currentYear - 1}. File before Dec 31, {currentYear}.
-          <Link href="/register" className="underline font-black hover:no-underline ml-1">
-            Start now →
-          </Link>
-        </span>
-      </div>
 
       {/* ── HERO ──────────────────────────────────────────────────────────── */}
       <section className="relative overflow-hidden bg-[#0D0D1A] min-h-screen flex items-center">

@@ -398,6 +398,53 @@ export type Database = {
         }
         Relationships: []
       }
+      leads: {
+        Row: {
+          id: string
+          first_name: string
+          last_name: string
+          email: string
+          phone_country_code: string
+          phone_number: string
+          contact_app: string
+          tax_years: number[]
+          has_steuer_id: boolean
+          has_payslips: boolean
+          status: string
+          admin_notes: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          first_name: string
+          last_name: string
+          email: string
+          phone_country_code?: string
+          phone_number: string
+          contact_app?: string
+          tax_years: number[]
+          has_steuer_id?: boolean
+          has_payslips?: boolean
+          status?: string
+          admin_notes?: string | null
+        }
+        Update: {
+          first_name?: string
+          last_name?: string
+          email?: string
+          phone_country_code?: string
+          phone_number?: string
+          contact_app?: string
+          tax_years?: number[]
+          has_steuer_id?: boolean
+          has_payslips?: boolean
+          status?: string
+          admin_notes?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       activity_logs: {
         Row: {
           id: string

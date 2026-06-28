@@ -2,11 +2,12 @@
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter, usePathname } from 'next/navigation'
-import { Shield, LayoutList, Users, LogOut } from 'lucide-react'
+import { Shield, LayoutList, Users, LogOut, UserPlus } from 'lucide-react'
 import LanguageSwitcher from '@/components/LanguageSwitcher'
 
 const ADMIN_NAV = [
   { href: '/admin/applications', icon: LayoutList, label: 'Applications' },
+  { href: '/admin/leads', icon: UserPlus, label: 'Leads' },
   { href: '/admin/users', icon: Users, label: 'Users' },
 ]
 
