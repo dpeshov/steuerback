@@ -97,7 +97,7 @@ export default function HomePage() {
             Worked in Germany? You likely paid too much tax. We get it back — fast, 100% online, and trusted by workers from 30+ countries.
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-3 justify-center mb-20">
+          <div className="flex flex-col sm:flex-row gap-3 justify-center mb-6">
             <Link
               href="/register"
               className="group bg-brand-red hover:bg-red-500 text-white font-bold px-8 py-4 rounded-2xl text-base transition-all hover:scale-[1.02] hover:shadow-2xl hover:shadow-brand-red/25 flex items-center justify-center gap-2"
@@ -111,6 +111,16 @@ export default function HomePage() {
             >
               Calculate my refund
             </a>
+          </div>
+
+          <div className="flex justify-center mb-20">
+            <Link
+              href="/apply"
+              className="group inline-flex items-center gap-2 bg-white/5 hover:bg-white/10 border border-brand-red/30 hover:border-brand-red/60 text-white font-semibold px-8 py-4 rounded-2xl text-base transition-all hover:shadow-lg hover:shadow-brand-red/10"
+            >
+              Interested in your tax refund? Apply here
+              <ArrowRight size={18} className="text-brand-red group-hover:translate-x-0.5 transition-transform" />
+            </Link>
           </div>
 
           {/* Stats */}

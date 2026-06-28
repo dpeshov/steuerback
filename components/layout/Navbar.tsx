@@ -31,11 +31,8 @@ export default function Navbar() {
             { href: '/calculate',    label: 'Tax Calculator' },
             { href: '/pricing', label: 'Pricing' },
             { href: '/faq', label: 'FAQ' },
-            { href: '/apply', label: 'Apply' },
           ].map(({ href, label }) => (
-            <Link key={href} href={href} className={`px-4 py-2 rounded-xl transition-all ${
-              href === '/apply' ? 'text-brand-red hover:text-red-400 font-semibold hover:bg-white/5' : 'text-white/60 hover:text-white hover:bg-white/5'
-            }`}>
+            <Link key={href} href={href} className="px-4 py-2 text-white/60 hover:text-white rounded-xl hover:bg-white/5 transition-all">
               {label}
             </Link>
           ))}
@@ -44,6 +41,9 @@ export default function Navbar() {
           <div className="w-px h-5 bg-white/10 mx-1" />
           <Link href="/login" className="px-4 py-2 text-white/60 hover:text-white transition-colors">
             Login
+          </Link>
+          <Link href="/apply" className="ml-1 border border-brand-red/50 hover:border-brand-red text-brand-red hover:bg-brand-red/10 font-semibold px-5 py-2 rounded-xl transition-all">
+            Apply now
           </Link>
           <Link href="/register" className="ml-1 bg-brand-red hover:bg-red-500 text-white font-semibold px-5 py-2 rounded-xl transition-all hover:shadow-lg hover:shadow-brand-red/30">
             Get started
